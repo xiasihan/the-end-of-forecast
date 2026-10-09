@@ -1,0 +1,262 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" font-family="'Microsoft YaHei','PingFang SC','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="headerG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d3748"/>
+      <stop offset="100%" stop-color="#1a202c"/>
+    </linearGradient>
+    <linearGradient id="btnG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4299e1"/>
+      <stop offset="100%" stop-color="#3182ce"/>
+    </linearGradient>
+    <linearGradient id="btnG2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#48bb78"/>
+      <stop offset="100%" stop-color="#38a169"/>
+    </linearGradient>
+    <filter id="shadow" x="-3%" y="-3%" width="108%" height="110%">
+      <feDropShadow dx="1" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect width="1100" height="780" fill="#f7fafc" rx="8"/>
+
+  <!-- ===== Top Nav ===== -->
+  <rect x="0" y="0" width="1100" height="52" fill="url(#headerG)" rx="8"/>
+  <rect x="0" y="40" width="1100" height="12" fill="url(#headerG)"/>
+  <text x="20" y="33" font-size="16" font-weight="bold" fill="#fff">🧪 AutoCast — 实验管理看板</text>
+
+  <rect x="760" y="12" width="100" height="28" rx="14" fill="url(#btnG)"/>
+  <text x="810" y="31" text-anchor="middle" font-size="11" fill="#fff">➕ 新建实验</text>
+  <rect x="872" y="12" width="100" height="28" rx="14" fill="#fff" stroke="#a0aec0" stroke-width="1"/>
+  <text x="922" y="31" text-anchor="middle" font-size="11" fill="#4a5568">⏹ 停止</text>
+  <rect x="984" y="12" width="100" height="28" rx="14" fill="url(#btnG2)"/>
+  <text x="1034" y="31" text-anchor="middle" font-size="11" fill="#fff">🚀 部署最优</text>
+
+  <!-- ===== Summary cards row ===== -->
+  <rect x="16" y="66" width="260" height="90" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="36" y="90" font-size="12" font-weight="bold" fill="#2d3748">📋 实验进度</text>
+  <line x1="36" y1="98" x2="260" y2="98" stroke="#e2e8f0" stroke-width="0.8"/>
+  <text x="36" y="120" font-size="28" font-weight="bold" fill="#4299e1">6</text>
+  <text x="80" y="120" font-size="12" fill="#718096">/ 12 完成</text>
+  <!-- Progress bar -->
+  <rect x="36" y="132" width="220" height="6" rx="3" fill="#edf2f7"/>
+  <rect x="36" y="132" width="110" height="6" rx="3" fill="#4299e1"/>
+  <text x="170" y="136" font-size="9" fill="#718096">50%</text>
+
+  <rect x="292" y="66" width="164" height="90" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="312" y="90" font-size="12" font-weight="bold" fill="#2d3748">🏆 当前最优</text>
+  <line x1="312" y1="98" x2="440" y2="98" stroke="#e2e8f0" stroke-width="0.8"/>
+  <text x="312" y="124" font-size="22" font-weight="bold" fill="#38a169">0.623</text>
+  <text x="312" y="144" font-size="10" fill="#718096">MASE · T4 (AutoLGBM)</text>
+
+  <rect x="472" y="66" width="164" height="90" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="492" y="90" font-size="12" font-weight="bold" fill="#2d3748">📈 方向准确率</text>
+  <line x1="492" y1="98" x2="620" y2="98" stroke="#e2e8f0" stroke-width="0.8"/>
+  <text x="492" y="124" font-size="22" font-weight="bold" fill="#3182ce">64.9%</text>
+  <text x="492" y="144" font-size="10" fill="#718096">+2.1pp vs 基线</text>
+
+  <rect x="652" y="66" width="164" height="90" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="672" y="90" font-size="12" font-weight="bold" fill="#2d3748">⏱ 迭代轮次</text>
+  <line x1="672" y1="98" x2="800" y2="98" stroke="#e2e8f0" stroke-width="0.8"/>
+  <text x="672" y="124" font-size="22" font-weight="bold" fill="#ed8936">3</text>
+  <text x="672" y="144" font-size="10" fill="#718096">/ 10 最大迭代</text>
+
+  <rect x="832" y="66" width="250" height="90" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="852" y="90" font-size="12" font-weight="bold" fill="#2d3748">⚡ 当前运行</text>
+  <line x1="852" y1="98" x2="1070" y2="98" stroke="#e2e8f0" stroke-width="0.8"/>
+  <text x="852" y="120" font-size="11" fill="#4a5568">T7 · AutoCatboost · 超参数调优</text>
+  <!-- Mini progress -->
+  <rect x="852" y="130" width="220" height="6" rx="3" fill="#edf2f7"/>
+  <rect x="852" y="130" width="165" height="6" rx="3" fill="#ed8936"/>
+  <text x="990" y="140" font-size="10" fill="#ed8936">75%</text>
+
+  <!-- ===== Experiment Table ===== -->
+  <rect x="16" y="170" width="1068" height="310" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+
+  <text x="36" y="196" font-size="14" font-weight="bold" fill="#2d3748">🧪 实验列表</text>
+
+  <!-- Table header -->
+  <rect x="16" y="208" width="1068" height="28" rx="4" fill="#edf2f7"/>
+  <text x="36" y="227" font-size="11" font-weight="bold" fill="#4a5568">实验 ID</text>
+  <text x="136" y="227" font-size="11" font-weight="bold" fill="#4a5568">模型</text>
+  <text x="246" y="227" font-size="11" font-weight="bold" fill="#4a5568">预处理</text>
+  <text x="356" y="227" font-size="11" font-weight="bold" fill="#4a5568">特征</text>
+  <text x="486" y="227" font-size="11" font-weight="bold" fill="#4a5568">精修</text>
+  <text x="586" y="227" font-size="11" font-weight="bold" fill="#4a5568">MASE ⬇</text>
+  <text x="686" y="227" font-size="11" font-weight="bold" fill="#4a5568">方向 Acc</text>
+  <text x="786" y="227" font-size="11" font-weight="bold" fill="#4a5568">CV 策略</text>
+  <text x="896" y="227" font-size="11" font-weight="bold" fill="#4a5568">状态</text>
+  <text x="1000" y="227" font-size="11" font-weight="bold" fill="#4a5568">操作</text>
+
+  <!-- Row 1 - best highlighted -->
+  <rect x="16" y="238" width="1068" height="32" fill="#f0fff4"/>
+  <rect x="16" y="238" width="4" height="32" fill="#38a169"/>
+  <text x="36" y="258" font-size="11" font-weight="bold" fill="#276749">T4</text>
+  <text x="136" y="258" font-size="11" fill="#2d3748">AutoLGBM</text>
+  <text x="246" y="258" font-size="11" fill="#2d3748">原始</text>
+  <text x="356" y="258" font-size="11" fill="#2d3748">lag_24, lag_168, hour</text>
+  <text x="486" y="258" font-size="11" fill="#2d3748">statistical</text>
+  <text x="586" y="258" font-size="11" font-weight="bold" fill="#38a169">0.623</text>
+  <text x="686" y="258" font-size="11" fill="#2d3748">64.9%</text>
+  <text x="786" y="258" font-size="11" fill="#2d3748">rolling(365)</text>
+  <rect x="896" y="242" width="64" height="22" rx="11" fill="#c6f6d5"/>
+  <text x="928" y="258" text-anchor="middle" font-size="10" fill="#276749">✅ 完成</text>
+  <text x="1000" y="258" font-size="11" fill="#4299e1">查看</text>
+
+  <line x1="16" y1="270" x2="1084" y2="270" stroke="#f7fafc" stroke-width="0.8"/>
+
+  <!-- Row 2 -->
+  <text x="36" y="290" font-size="11" fill="#2d3748">T1</text>
+  <text x="136" y="290" font-size="11" fill="#2d3748">TimesFM</text>
+  <text x="246" y="290" font-size="11" fill="#2d3748">seasonal_decomp</text>
+  <text x="356" y="290" font-size="11" fill="#2d3748">hour_dummies</text>
+  <text x="486" y="290" font-size="11" fill="#2d3748">none</text>
+  <text x="586" y="290" font-size="11" fill="#2d3748">0.687</text>
+  <text x="686" y="290" font-size="11" fill="#2d3748">61.2%</text>
+  <text x="786" y="290" font-size="11" fill="#2d3748">expanding(180)</text>
+  <rect x="896" y="282" width="64" height="22" rx="11" fill="#c6f6d5"/>
+  <text x="928" y="298" text-anchor="middle" font-size="10" fill="#276749">✅ 完成</text>
+  <text x="1000" y="290" font-size="11" fill="#4299e1">查看</text>
+
+  <line x1="16" y1="302" x2="1084" y2="302" stroke="#f7fafc" stroke-width="0.8"/>
+
+  <!-- Row 3 -->
+  <text x="36" y="322" font-size="11" fill="#2d3748">T2</text>
+  <text x="136" y="322" font-size="11" fill="#2d3748">AutoARIMA</text>
+  <text x="246" y="322" font-size="11" fill="#2d3748">差分</text>
+  <text x="356" y="322" font-size="11" fill="#2d3748">无</text>
+  <text x="486" y="322" font-size="11" fill="#2d3748">none</text>
+  <text x="586" y="322" font-size="11" fill="#2d3748">0.745</text>
+  <text x="686" y="322" font-size="11" fill="#2d3748">58.7%</text>
+  <text x="786" y="322" font-size="11" fill="#2d3748">rolling(90)</text>
+  <rect x="896" y="314" width="64" height="22" rx="11" fill="#c6f6d5"/>
+  <text x="928" y="330" text-anchor="middle" font-size="10" fill="#276749">✅ 完成</text>
+  <text x="1000" y="322" font-size="11" fill="#4299e1">查看</text>
+
+  <line x1="16" y1="334" x2="1084" y2="334" stroke="#f7fafc" stroke-width="0.8"/>
+
+  <!-- Row 4 - running with progress -->
+  <rect x="16" y="336" width="1068" height="32" fill="#fffbeb"/>
+  <text x="36" y="356" font-size="11" fill="#2d3748">T7</text>
+  <text x="136" y="356" font-size="11" fill="#2d3748">AutoCatboost</text>
+  <text x="246" y="356" font-size="11" fill="#2d3748">原始</text>
+  <text x="356" y="356" font-size="11" fill="#2d3748">lag_24, lag_168, hour_dow</text>
+  <text x="486" y="356" font-size="11" fill="#2d3748">A2 (LLM)</text>
+  <text x="586" y="356" font-size="11" fill="#a0aec0">—</text>
+  <text x="686" y="356" font-size="11" fill="#a0aec0">—</text>
+  <text x="786" y="356" font-size="11" fill="#2d3748">rolling(365)</text>
+  <rect x="896" y="348" width="64" height="22" rx="11" fill="#fefcbf"/>
+  <text x="928" y="364" text-anchor="middle" font-size="10" fill="#744210">⏳ 运行中</text>
+  <text x="1000" y="356" font-size="11" fill="#a0aec0">—</text>
+
+  <line x1="16" y1="368" x2="1084" y2="368" stroke="#f7fafc" stroke-width="0.8"/>
+
+  <!-- Row 5 -->
+  <text x="36" y="388" font-size="11" fill="#2d3748">T9</text>
+  <text x="136" y="388" font-size="11" fill="#2d3748">Ensemble</text>
+  <text x="246" y="388" font-size="11" fill="#2d3748">原始</text>
+  <text x="356" y="388" font-size="11" fill="#2d3748">全特征</text>
+  <text x="486" y="388" font-size="11" fill="#2d3748">F2 (OOF)</text>
+  <text x="586" y="388" font-size="11" fill="#a0aec0">—</text>
+  <text x="686" y="388" font-size="11" fill="#a0aec0">—</text>
+  <text x="786" y="388" font-size="11" fill="#2d3748">rolling(365)</text>
+  <rect x="896" y="380" width="64" height="22" rx="11" fill="#e2e8f0"/>
+  <text x="928" y="396" text-anchor="middle" font-size="10" fill="#718096">⏸ 排队中</text>
+  <text x="1000" y="388" font-size="11" fill="#a0aec0">—</text>
+
+  <line x1="16" y1="400" x2="1084" y2="400" stroke="#f7fafc" stroke-width="0.8"/>
+
+  <!-- Row 6 -->
+  <text x="36" y="420" font-size="11" fill="#2d3748">T12</text>
+  <text x="136" y="420" font-size="11" fill="#2d3748">Chronos</text>
+  <text x="246" y="420" font-size="11" fill="#2d3748">对数变换</text>
+  <text x="356" y="420" font-size="11" fill="#2d3748">无</text>
+  <text x="486" y="420" font-size="11" fill="#2d3748">none</text>
+  <text x="586" y="420" font-size="11" fill="#a0aec0">—</text>
+  <text x="686" y="420" font-size="11" fill="#a0aec0">—</text>
+  <text x="786" y="420" font-size="11" fill="#2d3748">expanding(180)</text>
+  <rect x="896" y="412" width="64" height="22" rx="11" fill="#e2e8f0"/>
+  <text x="928" y="428" text-anchor="middle" font-size="10" fill="#718096">⏸ 排队中</text>
+  <text x="1000" y="420" font-size="11" fill="#a0aec0">—</text>
+
+  <!-- Bottom section: Charts -->
+  <!-- Radar chart area -->
+  <rect x="16" y="496" width="530" height="265" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="36" y="520" font-size="13" font-weight="bold" fill="#2d3748">🎯 多维度性能对比</text>
+  <line x1="36" y1="528" x2="530" y2="528" stroke="#e2e8f0" stroke-width="0.8"/>
+
+  <!-- Radar chart - simplified visual -->
+  <circle cx="280" cy="660" r="100" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+  <circle cx="280" cy="660" r="75" fill="none" stroke="#e2e8f0" stroke-width="0.8"/>
+  <circle cx="280" cy="660" r="50" fill="none" stroke="#e2e8f0" stroke-width="0.8"/>
+  <circle cx="280" cy="660" r="25" fill="none" stroke="#e2e8f0" stroke-width="0.8"/>
+
+  <!-- Axis labels -->
+  <text x="280" y="545" text-anchor="middle" font-size="10" fill="#4a5568">精度 (MASE)</text>
+  <text x="280" y="778" text-anchor="middle" font-size="10" fill="#4a5568">稳定性</text>
+  <text x="165" y="663" text-anchor="middle" font-size="10" fill="#4a5568">速度</text>
+  <text x="395" y="663" text-anchor="middle" font-size="10" fill="#4a5568">可解释性</text>
+  <text x="190" y="590" text-anchor="middle" font-size="10" fill="#4a5568">泛化能力</text>
+  <text x="370" y="590" text-anchor="middle" font-size="10" fill="#4a5568">数据效率</text>
+
+  <!-- Radar data - T4 (best) -->
+  <polygon points="280,572 335,612 335,660 280,728 200,660 200,620" fill="#4299e1" fill-opacity="0.15" stroke="#4299e1" stroke-width="2"/>
+  <text x="285" y="595" font-size="9" fill="#4299e1">T4 (AutoLGBM)</text>
+
+  <!-- Radar data - T1 -->
+  <polygon points="280,590 310,620 310,655 280,720 230,655 230,630" fill="#ed8936" fill-opacity="0.12" stroke="#ed8936" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="310" y="630" font-size="9" fill="#ed8936">T1 (TimesFM)</text>
+
+  <!-- Legend -->
+  <rect x="380" y="546" width="140" height="100" rx="6" fill="#f7fafc" stroke="#e2e8f0" stroke-width="0.8"/>
+  <line x1="390" y1="563" x2="420" y2="563" stroke="#4299e1" stroke-width="2"/>
+  <text x="426" y="567" font-size="9" fill="#4a5568">T4 最佳方案</text>
+  <line x1="390" y1="583" x2="420" y2="583" stroke="#ed8936" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="426" y="587" font-size="9" fill="#4a5568">T1 对照方案</text>
+  <text x="390" y="610" font-size="9" fill="#718096">更靠外 = 更优</text>
+  <text x="390" y="626" font-size="9" fill="#718096">6 维度全面评估</text>
+
+  <!-- Convergence chart -->
+  <rect x="560" y="496" width="524" height="265" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="580" y="520" font-size="13" font-weight="bold" fill="#2d3748">📈 迭代收敛曲线 (MASE)</text>
+  <line x1="580" y1="528" x2="1070" y2="528" stroke="#e2e8f0" stroke-width="0.8"/>
+
+  <!-- Chart grid -->
+  <line x1="600" y1="550" x2="600" y2="740" stroke="#e2e8f0" stroke-width="0.8"/>
+  <line x1="600" y1="740" x2="1070" y2="740" stroke="#e2e8f0" stroke-width="0.8"/>
+
+  <!-- Y axis labels -->
+  <text x="590" y="744" text-anchor="end" font-size="9" fill="#a0aec0">0.60</text>
+  <text x="590" y="710" text-anchor="end" font-size="9" fill="#a0aec0">0.65</text>
+  <text x="590" y="678" text-anchor="end" font-size="9" fill="#a0aec0">0.70</text>
+  <text x="590" y="646" text-anchor="end" font-size="9" fill="#a0aec0">0.75</text>
+  <text x="590" y="614" text-anchor="end" font-size="9" fill="#a0aec0">0.80</text>
+
+  <!-- X axis labels -->
+  <text x="620" y="756" text-anchor="middle" font-size="9" fill="#a0aec0">T1</text>
+  <text x="700" y="756" text-anchor="middle" font-size="9" fill="#a0aec0">T2</text>
+  <text x="780" y="756" text-anchor="middle" font-size="9" fill="#a0aec0">T3</text>
+  <text x="860" y="756" text-anchor="middle" font-size="9" fill="#a0aec0">T4</text>
+  <text x="940" y="756" text-anchor="middle" font-size="9" fill="#a0aec0">T5</text>
+  <text x="1020" y="756" text-anchor="middle" font-size="9" fill="#a0aec0">T6</text>
+
+  <!-- Best-so-far line -->
+  <polyline points="620,728 700,718 780,710 860,678 940,678 1020,670" fill="none" stroke="#4299e1" stroke-width="2.5"/>
+  <text x="1030" y="662" font-size="9" fill="#4299e1">最佳 MASE</text>
+
+  <!-- Individual trial dots with values -->
+  <circle cx="620" cy="728" r="4" fill="#4299e1"/>
+  <text x="620" y="720" text-anchor="middle" font-size="8" fill="#4299e1">0.745</text>
+  <circle cx="700" cy="718" r="4" fill="#4299e1"/>
+  <text x="700" y="710" text-anchor="middle" font-size="8" fill="#4299e1">0.712</text>
+  <circle cx="780" cy="710" r="4" fill="#4299e1"/>
+  <text x="780" y="702" text-anchor="middle" font-size="8" fill="#4299e1">0.687</text>
+  <circle cx="860" cy="678" r="5" fill="#38a169"/>
+  <text x="860" y="670" text-anchor="middle" font-size="8" fill="#38a169">0.623</text>
+  <circle cx="940" cy="678" r="4" fill="#a0aec0"/>
+  <text x="940" y="670" text-anchor="middle" font-size="8" fill="#a0aec0">0.631</text>
+
+  <!-- Dashed convergence threshold -->
+  <line x1="600" y1="708" x2="1070" y2="708" stroke="#e53e3e" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="1072" y="712" font-size="9" fill="#e53e3e">收敛阈值</text>
+
+</svg>

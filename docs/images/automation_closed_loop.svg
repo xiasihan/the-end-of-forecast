@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 920" font-family="'Microsoft YaHei','PingFang SC','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7fafc"/>
+      <stop offset="100%" stop-color="#edf2f7"/>
+    </linearGradient>
+    <linearGradient id="blueG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4299e1"/>
+      <stop offset="100%" stop-color="#3182ce"/>
+    </linearGradient>
+    <linearGradient id="greenG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#48bb78"/>
+      <stop offset="100%" stop-color="#38a169"/>
+    </linearGradient>
+    <linearGradient id="orangeG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ed8936"/>
+      <stop offset="100%" stop-color="#dd6b20"/>
+    </linearGradient>
+    <linearGradient id="purpleG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9f7aea"/>
+      <stop offset="100%" stop-color="#805ad5"/>
+    </linearGradient>
+    <linearGradient id="pinkG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fc8181"/>
+      <stop offset="100%" stop-color="#f56565"/>
+    </linearGradient>
+    <linearGradient id="tealG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38b2ac"/>
+      <stop offset="100%" stop-color="#319795"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="115%" height="120%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.1"/>
+    </filter>
+    <filter id="shadowDeep" x="-8%" y="-8%" width="120%" height="125%">
+      <feDropShadow dx="2" dy="3" stdDeviation="5" flood-color="#000" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4a5568"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="920" fill="url(#bg)" rx="8"/>
+
+  <text x="500" y="38" text-anchor="middle" font-size="20" font-weight="bold" fill="#2d3748">自动化预测闭环 — 从数据上传到持续优化</text>
+  <line x1="160" y1="50" x2="840" y2="50" stroke="#cbd5e0" stroke-width="1"/>
+
+  <!-- Main loop circle - large ring -->
+  <circle cx="500" cy="500" r="340" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-dasharray="6,4"/>
+
+  <!-- ===== Top: Upload ===== -->
+  <rect x="370" y="72" width="260" height="60" rx="30" fill="url(#blueG)" filter="url(#shadowDeep)"/>
+  <text x="500" y="98" text-anchor="middle" font-size="14" font-weight="bold" fill="#fff">📤 用户上传数据</text>
+  <text x="500" y="118" text-anchor="middle" font-size="10" fill="#bee3f8">CSV / Parquet / Excel</text>
+
+  <line x1="500" y1="132" x2="500" y2="178" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== Phase 1: Auto Exploration ===== -->
+  <rect x="310" y="182" width="380" height="80" rx="12" fill="#fff" stroke="#4299e1" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="310" y="182" width="8" height="80" rx="4" fill="#4299e1"/>
+  <text x="332" y="206" font-size="14" font-weight="bold" fill="#2b6cb0">🔬 阶段一：智能体全自动探索</text>
+  <text x="332" y="226" font-size="11" fill="#4a5568">LeakGuard 泄漏检测 → 特征指纹提取 → 数据画像报告</text>
+  <text x="332" y="244" font-size="11" fill="#4a5568">实验规划（基于指纹匹配历史经验）</text>
+
+  <line x1="500" y1="262" x2="500" y2="308" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== Phase 2: Multi-round Iteration ===== -->
+  <rect x="310" y="312" width="380" height="80" rx="12" fill="#fff" stroke="#ed8936" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="310" y="312" width="8" height="80" rx="4" fill="#ed8936"/>
+  <text x="332" y="336" font-size="14" font-weight="bold" fill="#c05621">🔄 阶段二：多轮迭代优化</text>
+  <text x="332" y="356" font-size="11" fill="#4a5568">① 广撒网 → ② 聚焦优化 → ③ 集成稳定</text>
+  <text x="332" y="374" font-size="11" fill="#4a5568">诊断 Agent 分析失败 → 自动调整策略 → 重新实验</text>
+
+  <!-- Self-loop arrow on phase 2 -->
+  <path d="M690,352 Q740,352 740,312 Q740,270 690,270" fill="none" stroke="#ed8936" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="755" y="318" font-size="9" fill="#dd6b20">迭代</text>
+
+  <line x1="500" y1="392" x2="500" y2="438" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== Phase 3: Deploy ===== -->
+  <rect x="340" y="442" width="320" height="60" rx="12" fill="#fff" stroke="#48bb78" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="340" y="442" width="8" height="60" rx="4" fill="#48bb78"/>
+  <text x="362" y="466" font-size="14" font-weight="bold" fill="#276749">🚀 阶段三：稳定部署</text>
+  <text x="362" y="486" font-size="11" fill="#4a5568">Pipeline 固化 → 容器化 → REST API 自动发布</text>
+
+  <line x1="500" y1="502" x2="500" y2="548" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== Running Phase ===== -->
+  <rect x="280" y="552" width="440" height="110" rx="14" fill="#fff" stroke="#9f7aea" stroke-width="1.5" filter="url(#shadowDeep)"/>
+  <rect x="280" y="552" width="440" height="32" rx="14" fill="#9f7aea"/>
+  <rect x="280" y="572" width="440" height="12" fill="#9f7aea"/>
+  <text x="500" y="574" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">⚙️ 持续运行阶段</text>
+
+  <!-- Sub-boxes within Running Phase -->
+  <rect x="296" y="594" width="128" height="54" rx="6" fill="#faf5ff" stroke="#d6bcfa" stroke-width="0.8"/>
+  <text x="360" y="616" text-anchor="middle" font-size="11" font-weight="bold" fill="#6b46c1">📅 定期预测</text>
+  <text x="360" y="636" text-anchor="middle" font-size="9" fill="#718096">每日 / 每小时</text>
+
+  <rect x="436" y="594" width="128" height="54" rx="6" fill="#faf5ff" stroke="#d6bcfa" stroke-width="0.8"/>
+  <text x="500" y="616" text-anchor="middle" font-size="11" font-weight="bold" fill="#6b46c1">📊 性能监控</text>
+  <text x="500" y="636" text-anchor="middle" font-size="9" fill="#718096">误差 / 漂移跟踪</text>
+
+  <rect x="576" y="594" width="128" height="54" rx="6" fill="#faf5ff" stroke="#d6bcfa" stroke-width="0.8"/>
+  <text x="640" y="616" text-anchor="middle" font-size="11" font-weight="bold" fill="#6b46c1">🔔 告警推送</text>
+  <text x="640" y="636" text-anchor="middle" font-size="9" fill="#718096">漂移 / 退化通知</text>
+
+  <!-- Arrow from Running to retrain decision -->
+  <line x1="500" y1="662" x2="500" y2="700" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== Retrain Decision ===== -->
+  <polygon points="500,704 590,736 500,768 410,736" fill="url(#orangeG)" filter="url(#shadowDeep)"/>
+  <text x="500" y="732" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">触发</text>
+  <text x="500" y="746" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">自动微调?</text>
+
+  <!-- No branch - loop back to running -->
+  <line x1="410" y1="736" x2="100" y2="736" stroke="#38a169" stroke-width="1.5"/>
+  <line x1="100" y1="736" x2="100" y2="170" stroke="#38a169" stroke-width="1.5"/>
+  <text x="60" y="460" font-size="22" fill="#38a169" font-weight="bold">↻</text>
+  <text x="40" y="480" font-size="10" fill="#38a169" font-weight="bold">不触发</text>
+  <text x="40" y="495" font-size="10" fill="#38a169">继续运行</text>
+
+  <!-- Yes branch -->
+  <line x1="500" y1="768" x2="500" y2="810" stroke="#e53e3e" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== Retrain ===== -->
+  <rect x="310" y="814" width="380" height="80" rx="12" fill="#fff" stroke="#fc8181" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="310" y="814" width="8" height="80" rx="4" fill="#fc8181"/>
+  <text x="332" y="838" font-size="14" font-weight="bold" fill="#c53030">🔄 自动重评估 + 微调</text>
+  <text x="332" y="858" font-size="11" fill="#4a5568">增量数据 → 重评估 → 微调/全重训</text>
+  <text x="332" y="876" font-size="11" fill="#4a5568">灰度部署 → 对比验证 → 切换/回滚</text>
+
+  <!-- Loop back arrow to deploy -->
+  <path d="M690,854 Q880,854 880,472 Q880,442 660,442" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="895" y="660" font-size="10" fill="#4a5568">部署更新</text>
+
+  <!-- ===== Trigger conditions box ===== -->
+  <rect x="710" y="552" width="250" height="180" rx="10" fill="#fffbeb" stroke="#f6ad55" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="835" y="578" text-anchor="middle" font-size="12" font-weight="bold" fill="#d69e2e">⏰ 触发条件</text>
+  <line x1="725" y1="586" x2="945" y2="586" stroke="#f6ad55" stroke-width="0.8"/>
+
+  <rect x="725" y="596" width="220" height="26" rx="6" fill="#fff" stroke="#f6ad55" stroke-width="0.8"/>
+  <text x="735" y="614" font-size="10" fill="#744210">⏱ 时间触发：每 30 天</text>
+
+  <rect x="725" y="628" width="220" height="26" rx="6" fill="#fff" stroke="#f6ad55" stroke-width="0.8"/>
+  <text x="735" y="646" font-size="10" fill="#744210">📦 数据量：新数据 &gt; 训练集 20%</text>
+
+  <rect x="725" y="660" width="220" height="26" rx="6" fill="#fff" stroke="#f6ad55" stroke-width="0.8"/>
+  <text x="735" y="678" font-size="10" fill="#744210">📉 性能退化：MASE 上升 &gt; 5%</text>
+
+  <rect x="725" y="692" width="220" height="26" rx="6" fill="#fff" stroke="#f6ad55" stroke-width="0.8"/>
+  <text x="735" y="710" font-size="10" fill="#744210">📊 分布漂移：KL 散度 &gt; 0.1</text>
+
+</svg>

@@ -1,0 +1,62 @@
+[project]
+name = "endforecast"
+version = "0.1.0"
+description = "The End of Forecast — AI agent-driven adaptive prediction automation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "EndForecast Contributors" }
+]
+keywords = ["forecasting", "automl", "time-series", "ml-agent", "llm", "prediction", "end-to-end"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "scikit-learn>=1.3",
+    "pydantic>=2.0",
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+    "typer>=0.9",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "joblib>=1.3",
+    "httpx>=0.25",
+]
+
+[project.optional-dependencies]
+llm = [
+    "pydantic-ai>=0.0.20",
+    "openai>=1.0",
+]
+all = [
+    "pydantic-ai>=0.0.20",
+    "openai>=1.0",
+    "statsforecast>=1.7",
+    "mlforecast>=0.13",
+    "xgboost>=2.0",
+    "lightgbm>=4.0",
+    "plotly>=5.0",
+]
+
+[project.scripts]
+endforecast = "endforecast.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/endforecast/endforecast"
+Documentation = "https://endforecast.dev/docs"
+Issues = "https://github.com/endforecast/endforecast/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

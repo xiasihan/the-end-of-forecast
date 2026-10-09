@@ -1,0 +1,241 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" font-family="'Microsoft YaHei','PingFang SC','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0f4f8"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="l5" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#5a67d8"/>
+    </linearGradient>
+    <linearGradient id="l4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#48bb78"/>
+      <stop offset="100%" stop-color="#38a169"/>
+    </linearGradient>
+    <linearGradient id="l3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ed8936"/>
+      <stop offset="100%" stop-color="#dd6b20"/>
+    </linearGradient>
+    <linearGradient id="l2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4299e1"/>
+      <stop offset="100%" stop-color="#3182ce"/>
+    </linearGradient>
+    <linearGradient id="l1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9f7aea"/>
+      <stop offset="100%" stop-color="#805ad5"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.12"/>
+    </filter>
+    <filter id="shadowDeep" x="-8%" y="-8%" width="116%" height="120%">
+      <feDropShadow dx="2" dy="3" stdDeviation="5" flood-color="#000" flood-opacity="0.18"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4a5568"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#3182ce"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#bg)" rx="8"/>
+
+  <!-- Title -->
+  <text x="600" y="42" text-anchor="middle" font-size="22" font-weight="bold" fill="#2d3748">WeCast 自适应 AI 预测自动化平台 — 系统总体架构</text>
+  <line x1="200" y1="55" x2="1000" y2="55" stroke="#cbd5e0" stroke-width="1"/>
+
+  <!-- ===== L5: 用户交互层 ===== -->
+  <rect x="50" y="72" width="1100" height="110" rx="6" fill="url(#l5)" opacity="0.12"/>
+  <rect x="50" y="72" width="1100" height="110" rx="6" fill="none" stroke="url(#l5)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="50" y="72" width="170" height="28" rx="14" fill="url(#l5)"/>
+  <text x="90" y="91" font-size="12" font-weight="bold" fill="#fff">L5 用户交互层</text>
+
+  <!-- L5 boxes -->
+  <rect x="90" y="108" width="200" height="56" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="190" y="132" text-anchor="middle" font-size="13" font-weight="bold" fill="#5a67d8">📤 数据上传面板</text>
+  <text x="190" y="152" text-anchor="middle" font-size="10" fill="#718096">拖拽上传 / 文件选择</text>
+
+  <rect x="320" y="108" width="200" height="56" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="420" y="132" text-anchor="middle" font-size="13" font-weight="bold" fill="#5a67d8">📊 可视化看板</text>
+  <text x="420" y="152" text-anchor="middle" font-size="10" fill="#718096">实时图表 / 交互探索</text>
+
+  <rect x="550" y="108" width="200" height="56" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="650" y="132" text-anchor="middle" font-size="13" font-weight="bold" fill="#5a67d8">💬 智能体对话</text>
+  <text x="650" y="152" text-anchor="middle" font-size="10" fill="#718096">自然语言交互查询</text>
+
+  <rect x="780" y="108" width="200" height="56" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="880" y="132" text-anchor="middle" font-size="13" font-weight="bold" fill="#5a67d8">🔌 API 网关</text>
+  <text x="880" y="152" text-anchor="middle" font-size="10" fill="#718096">REST / WebSocket</text>
+
+  <!-- Arrow L4→L5 -->
+  <line x1="600" y1="208" x2="600" y2="182" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== L4: 部署服务层 ===== -->
+  <rect x="50" y="212" width="1100" height="120" rx="6" fill="url(#l4)" opacity="0.12"/>
+  <rect x="50" y="212" width="1100" height="120" rx="6" fill="none" stroke="url(#l4)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="50" y="212" width="170" height="28" rx="14" fill="url(#l4)"/>
+  <text x="90" y="231" font-size="12" font-weight="bold" fill="#fff">L4 部署服务层</text>
+
+  <rect x="90" y="248" width="230" height="68" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="205" y="272" text-anchor="middle" font-size="13" font-weight="bold" fill="#38a169">🚀 预测服务网关</text>
+  <text x="205" y="290" text-anchor="middle" font-size="10" fill="#718096">实时预测 / 批量预测</text>
+  <text x="205" y="305" text-anchor="middle" font-size="10" fill="#718096">负载均衡 + 自动扩缩容</text>
+
+  <rect x="360" y="248" width="230" height="68" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="475" y="272" text-anchor="middle" font-size="13" font-weight="bold" fill="#38a169">📈 性能监控</text>
+  <text x="475" y="290" text-anchor="middle" font-size="10" fill="#718096">误差追踪 / 漂移检测</text>
+  <text x="475" y="305" text-anchor="middle" font-size="10" fill="#718096">告警推送</text>
+
+  <rect x="630" y="248" width="230" height="68" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="745" y="272" text-anchor="middle" font-size="13" font-weight="bold" fill="#38a169">🔄 版本管理</text>
+  <text x="745" y="290" text-anchor="middle" font-size="10" fill="#718096">模型版本管理</text>
+  <text x="745" y="305" text-anchor="middle" font-size="10" fill="#718096">灰度发布 / 自动回滚</text>
+
+  <rect x="900" y="248" width="200" height="68" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="1000" y="272" text-anchor="middle" font-size="13" font-weight="bold" fill="#38a169">⚙️ 调度器</text>
+  <text x="1000" y="290" text-anchor="middle" font-size="10" fill="#718096">定时预测 / 重评估调度</text>
+  <text x="1000" y="305" text-anchor="middle" font-size="10" fill="#718096">任务编排</text>
+
+  <!-- Arrow L3→L4 -->
+  <line x1="600" y1="358" x2="600" y2="332" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== L3: 实验管理层 ===== -->
+  <rect x="50" y="362" width="1100" height="120" rx="6" fill="url(#l3)" opacity="0.12"/>
+  <rect x="50" y="362" width="1100" height="120" rx="6" fill="none" stroke="url(#l3)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="50" y="362" width="170" height="28" rx="14" fill="url(#l3)"/>
+  <text x="90" y="381" font-size="12" font-weight="bold" fill="#fff">L3 实验管理层</text>
+
+  <rect x="90" y="398" width="230" height="68" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="205" y="422" text-anchor="middle" font-size="13" font-weight="bold" fill="#dd6b20">🧪 实验路由器</text>
+  <text x="205" y="440" text-anchor="middle" font-size="10" fill="#718096">快速 / 标准 / 深度通道</text>
+  <text x="205" y="455" text-anchor="middle" font-size="10" fill="#718096">自动路由决策</text>
+
+  <rect x="360" y="398" width="230" height="68" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="475" y="422" text-anchor="middle" font-size="13" font-weight="bold" fill="#dd6b20">📋 任务调度</text>
+  <text x="475" y="440" text-anchor="middle" font-size="10" fill="#718096">实验队列管理</text>
+  <text x="475" y="455" text-anchor="middle" font-size="10" fill="#718096">资源分配</text>
+
+  <rect x="630" y="398" width="230" height="68" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="745" y="422" text-anchor="middle" font-size="13" font-weight="bold" fill="#dd6b20">🏆 Meta-Learner</text>
+  <text x="745" y="440" text-anchor="middle" font-size="10" fill="#718096">Top-K 筛选</text>
+  <text x="745" y="455" text-anchor="middle" font-size="10" fill="#718096">集成 / 条件路由</text>
+
+  <rect x="900" y="398" width="200" height="68" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="1000" y="422" text-anchor="middle" font-size="13" font-weight="bold" fill="#dd6b20">💾 结果数据库</text>
+  <text x="1000" y="440" text-anchor="middle" font-size="10" fill="#718096">实验记录持久化</text>
+  <text x="1000" y="455" text-anchor="middle" font-size="10" fill="#718096">性能追踪</text>
+
+  <!-- Arrow L2→L3 -->
+  <line x1="600" y1="508" x2="600" y2="482" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== L2: 智能体编排层 ===== -->
+  <rect x="50" y="512" width="1100" height="145" rx="6" fill="url(#l2)" opacity="0.12"/>
+  <rect x="50" y="512" width="1100" height="145" rx="6" fill="none" stroke="url(#l2)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="50" y="512" width="190" height="28" rx="14" fill="url(#l2)"/>
+  <text x="90" y="531" font-size="12" font-weight="bold" fill="#fff">L2 智能体编排层</text>
+
+  <rect x="70" y="548" width="200" height="50" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="170" y="570" text-anchor="middle" font-size="12" font-weight="bold" fill="#3182ce">🔍 数据探索 Agent</text>
+  <text x="170" y="588" text-anchor="middle" font-size="10" fill="#718096">浏览 → 泄漏检测 → 指纹</text>
+
+  <rect x="290" y="548" width="200" height="50" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="390" y="570" text-anchor="middle" font-size="12" font-weight="bold" fill="#3182ce">📝 实验规划 Agent</text>
+  <text x="390" y="588" text-anchor="middle" font-size="10" fill="#718096">方案设计 → 实验计划</text>
+
+  <rect x="510" y="548" width="200" height="50" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="610" y="570" text-anchor="middle" font-size="12" font-weight="bold" fill="#3182ce">🩺 诊断 Agent</text>
+  <text x="610" y="588" text-anchor="middle" font-size="10" fill="#718096">失败分析 → 策略建议</text>
+
+  <rect x="730" y="548" width="200" height="50" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="830" y="570" text-anchor="middle" font-size="12" font-weight="bold" fill="#3182ce">🎯 精修 Agent</text>
+  <text x="830" y="588" text-anchor="middle" font-size="10" fill="#718096">LLM / 统计精修</text>
+
+  <rect x="950" y="548" width="180" height="50" rx="8" fill="#fff" filter="url(#shadow)"/>
+  <text x="1040" y="570" text-anchor="middle" font-size="12" font-weight="bold" fill="#3182ce">🧠 知识检索</text>
+  <text x="1040" y="588" text-anchor="middle" font-size="10" fill="#718096">RAGFlow 知识库</text>
+
+  <!-- Agent interconnect arrows (horizontal flow) -->
+  <line x1="270" y1="573" x2="288" y2="573" stroke="#3182ce" stroke-width="1.2" marker-end="url(#arrowBlue)"/>
+  <line x1="490" y1="573" x2="508" y2="573" stroke="#3182ce" stroke-width="1.2" marker-end="url(#arrowBlue)"/>
+  <line x1="710" y1="573" x2="728" y2="573" stroke="#3182ce" stroke-width="1.2" marker-end="url(#arrowBlue)"/>
+  <line x1="930" y1="573" x2="948" y2="573" stroke="#3182ce" stroke-width="1.2" marker-end="url(#arrowBlue)"/>
+
+  <!-- LLM Orchestrator label -->
+  <rect x="320" y="608" width="560" height="32" rx="16" fill="#ebf8ff" stroke="#3182ce" stroke-width="1"/>
+  <text x="600" y="629" text-anchor="middle" font-size="11" fill="#3182ce">🤖 Pydantic-AI Agent 编排框架 — LLM 驱动的智能体工作流</text>
+
+  <!-- Arrow L1→L2 -->
+  <line x1="600" y1="688" x2="600" y2="657" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== L1: 模型与数据引擎 ===== -->
+  <rect x="50" y="692" width="1100" height="185" rx="6" fill="url(#l1)" opacity="0.12"/>
+  <rect x="50" y="692" width="1100" height="185" rx="6" fill="none" stroke="url(#l1)" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="50" y="692" width="190" height="28" rx="14" fill="url(#l1)"/>
+  <text x="90" y="711" font-size="12" font-weight="bold" fill="#fff">L1 模型与数据引擎</text>
+
+  <!-- Sub-columns -->
+  <!-- Data -->
+  <rect x="70" y="728" width="330" height="135" rx="6" fill="#faf5ff" stroke="#d6bcfa" stroke-width="1"/>
+  <text x="235" y="748" text-anchor="middle" font-size="12" font-weight="bold" fill="#805ad5">📦 数据处理</text>
+
+  <rect x="82" y="756" width="140" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="152" y="774" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">🛡️ LeakGuard</text>
+  <text x="152" y="788" text-anchor="middle" font-size="9" fill="#a0aec0">泄漏检测引擎</text>
+
+  <rect x="250" y="756" width="140" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="320" y="774" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">🔬 特征指纹</text>
+  <text x="320" y="788" text-anchor="middle" font-size="9" fill="#a0aec0">统计特征提取</text>
+
+  <rect x="82" y="800" width="140" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="152" y="818" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">⚡ 数据验证器</text>
+  <text x="152" y="832" text-anchor="middle" font-size="9" fill="#a0aec0">格式 / 完整性校验</text>
+
+  <rect x="250" y="800" width="140" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="320" y="818" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">📐 协变量引擎</text>
+  <text x="320" y="832" text-anchor="middle" font-size="9" fill="#a0aec0">日历 / 外部特征</text>
+
+  <!-- Models -->
+  <rect x="415" y="728" width="370" height="135" rx="6" fill="#faf5ff" stroke="#d6bcfa" stroke-width="1"/>
+  <text x="600" y="748" text-anchor="middle" font-size="12" font-weight="bold" fill="#805ad5">🧠 模型库</text>
+
+  <rect x="425" y="756" width="108" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="479" y="774" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">📊 统计模型</text>
+  <text x="479" y="788" text-anchor="middle" font-size="9" fill="#a0aec0">ARIMA / ETS / Theta</text>
+
+  <rect x="540" y="756" width="108" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="594" y="774" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">🤖 ML 模型</text>
+  <text x="594" y="788" text-anchor="middle" font-size="9" fill="#a0aec0">LGBM / XGB / RF</text>
+
+  <rect x="655" y="756" width="118" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="714" y="774" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">🧬 神经网络</text>
+  <text x="714" y="788" text-anchor="middle" font-size="9" fill="#a0aec0">DeepAR / NBEATS</text>
+
+  <rect x="425" y="800" width="175" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="512" y="818" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">🌐 基础模型 (LLM)</text>
+  <text x="512" y="832" text-anchor="middle" font-size="9" fill="#a0aec0">TimesFM / Chronos / Moirai</text>
+
+  <rect x="610" y="800" width="165" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="692" y="818" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">⚡ 集成模型</text>
+  <text x="692" y="832" text-anchor="middle" font-size="9" fill="#a0aec0">Median / Stacking</text>
+
+  <!-- Refinement -->
+  <rect x="800" y="728" width="330" height="135" rx="6" fill="#faf5ff" stroke="#d6bcfa" stroke-width="1"/>
+  <text x="965" y="748" text-anchor="middle" font-size="12" font-weight="bold" fill="#805ad5">🎛️ 精修引擎</text>
+
+  <rect x="812" y="756" width="140" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="882" y="774" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">📐 统计精修</text>
+  <text x="882" y="788" text-anchor="middle" font-size="9" fill="#a0aec0">WinAdapt / OOF τ</text>
+
+  <rect x="970" y="756" width="148" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="1044" y="774" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">💬 LLM 精修</text>
+  <text x="1044" y="788" text-anchor="middle" font-size="9" fill="#a0aec0">A0~F2 / Meta-Refine</text>
+
+  <rect x="812" y="800" width="148" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="886" y="818" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">🔗 后验计算</text>
+  <text x="886" y="832" text-anchor="middle" font-size="9" fill="#a0aec0">Logistic / 条件后验</text>
+
+  <rect x="970" y="800" width="148" height="38" rx="6" fill="#fff" filter="url(#shadow)"/>
+  <text x="1044" y="818" text-anchor="middle" font-size="10" font-weight="bold" fill="#805ad5">📚 RAGFlow 知识库</text>
+  <text x="1044" y="832" text-anchor="middle" font-size="9" fill="#a0aec0">领域知识检索</text>
+
+</svg>

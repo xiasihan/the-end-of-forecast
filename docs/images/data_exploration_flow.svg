@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 880" font-family="'Microsoft YaHei','PingFang SC','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7fafc"/>
+      <stop offset="100%" stop-color="#edf2f7"/>
+    </linearGradient>
+    <linearGradient id="startG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#48bb78"/>
+      <stop offset="100%" stop-color="#38a169"/>
+    </linearGradient>
+    <linearGradient id="procG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4299e1"/>
+      <stop offset="100%" stop-color="#3182ce"/>
+    </linearGradient>
+    <linearGradient id="decG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ed8936"/>
+      <stop offset="100%" stop-color="#dd6b20"/>
+    </linearGradient>
+    <linearGradient id="endG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9f7aea"/>
+      <stop offset="100%" stop-color="#805ad5"/>
+    </linearGradient>
+    <linearGradient id="successG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#48bb78"/>
+      <stop offset="100%" stop-color="#2f855a"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="115%" height="115%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.1"/>
+    </filter>
+    <filter id="shadowDeep" x="-8%" y="-8%" width="116%" height="120%">
+      <feDropShadow dx="2" dy="3" stdDeviation="5" flood-color="#000" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4a5568"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="880" fill="url(#bg)" rx="8"/>
+
+  <text x="500" y="38" text-anchor="middle" font-size="20" font-weight="bold" fill="#2d3748">数据探索与智能体实验规划流程</text>
+  <line x1="200" y1="50" x2="800" y2="50" stroke="#cbd5e0" stroke-width="1"/>
+
+  <!-- ===== Start ===== -->
+  <ellipse cx="500" cy="90" rx="110" ry="24" fill="url(#startG)" filter="url(#shadowDeep)"/>
+  <text x="500" y="95" text-anchor="middle" font-size="14" font-weight="bold" fill="#fff">📤 用户上传数据</text>
+
+  <line x1="500" y1="114" x2="500" y2="148" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 1: Data Validation -->
+  <rect x="350" y="152" width="300" height="60" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="350" y="152" width="8" height="60" rx="4" fill="#4299e1"/>
+  <text x="370" y="176" font-size="13" font-weight="bold" fill="#2d3748">步骤 1：数据校验与预处理</text>
+  <text x="370" y="196" font-size="11" fill="#718096">格式解析 → 缺失检测 → 频率推断 → 异常标记</text>
+
+  <line x1="500" y1="212" x2="500" y2="246" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 2: LeakGuard -->
+  <rect x="310" y="250" width="380" height="70" rx="10" fill="#fff" stroke="#fc8181" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="310" y="250" width="8" height="70" rx="4" fill="#fc8181"/>
+  <text x="330" y="274" font-size="13" font-weight="bold" fill="#c53030">步骤 2：泄漏门卫（LeakGuard）🔒</text>
+  <text x="330" y="294" font-size="11" fill="#718096">① 时间泄漏 → ② 特征穿越 → ③ 标签泄漏 → ④ 窗口重叠</text>
+  <text x="330" y="310" font-size="10" fill="#e53e3e">违规 → 拒绝执行 | 警告 → 标记过滤 | 通过 → 继续</text>
+
+  <line x1="500" y1="320" x2="500" y2="354" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Decision: LeakGuard Result -->
+  <polygon points="500,358 570,390 500,422 430,390" fill="url(#decG)" filter="url(#shadowDeep)"/>
+  <text x="500" y="387" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">泄漏</text>
+  <text x="500" y="400" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">检测结果?</text>
+
+  <!-- Reject branch -->
+  <line x1="430" y1="390" x2="300" y2="390" stroke="#e53e3e" stroke-width="1.5"/>
+  <line x1="300" y1="390" x2="300" y2="450" stroke="#e53e3e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="220" y="454" width="160" height="44" rx="22" fill="#fff" stroke="#e53e3e" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="300" y="476" text-anchor="middle" font-size="12" font-weight="bold" fill="#e53e3e">⛔ 拒绝并报告</text>
+  <text x="300" y="492" text-anchor="middle" font-size="10" fill="#718096">返回泄漏详情</text>
+
+  <!-- Pass branch -->
+  <line x1="500" y1="422" x2="500" y2="460" stroke="#38a169" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 3: Feature Fingerprint -->
+  <rect x="310" y="464" width="380" height="70" rx="10" fill="#fff" stroke="#d6bcfa" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="310" y="464" width="8" height="70" rx="4" fill="#9f7aea"/>
+  <text x="330" y="488" font-size="13" font-weight="bold" fill="#6b46c1">步骤 3：特征指纹提取 🔬</text>
+  <text x="330" y="508" font-size="11" fill="#718096">① 统计特征（ACF/PACF/季节性强度）→ ② 分布特征（偏度/峰度/零比）</text>
+  <text x="330" y="524" font-size="11" fill="#718096">③ 结构特征（周期/序列数/长度）→ ④ 领域特征（电价模式/峰谷比）</text>
+
+  <line x1="500" y1="534" x2="500" y2="568" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Step 4: Data Profile Report -->
+  <rect x="310" y="572" width="380" height="56" rx="10" fill="#fff" stroke="#f6ad55" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="310" y="572" width="8" height="56" rx="4" fill="#ed8936"/>
+  <text x="330" y="594" font-size="13" font-weight="bold" fill="#c05621">步骤 4：数据画像报告生成 📋</text>
+  <text x="330" y="614" font-size="11" fill="#718096">时间范围 / 完整性 / 特征指纹 / 泄漏检查结果 / 推荐策略</text>
+
+  <line x1="500" y1="628" x2="500" y2="668" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== Agent Interaction Box ===== -->
+  <rect x="180" y="672" width="640" height="90" rx="12" fill="#ebf8ff" stroke="#63b3ed" stroke-width="1.5" filter="url(#shadowDeep)"/>
+  <text x="500" y="698" text-anchor="middle" font-size="14" font-weight="bold" fill="#2b6cb0">💬 智能体交互：实验规划</text>
+
+  <text x="210" y="720" font-size="11" fill="#4a5568">基于特征指纹匹配历史成功案例 → 设计对比实验方案</text>
+  <text x="210" y="738" font-size="11" fill="#4a5568">同用户确认实验计划 → 生成立即可执行的实验配置文件</text>
+  <text x="210" y="756" font-size="11" fill="#4a5568">用户可通过自然语言调整：<tspan fill="#3182ce" font-weight="bold">"加一个用 DeepAR 的对照实验"</tspan></text>
+
+  <!-- Arrow to next phase -->
+  <line x1="500" y1="762" x2="500" y2="800" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Output -->
+  <rect x="350" y="804" width="300" height="50" rx="25" fill="url(#endG)" filter="url(#shadowDeep)"/>
+  <text x="500" y="828" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">📋 实验计划书 → 进入多轮迭代</text>
+
+  <!-- Right side: Sub-flow for agent data browsing -->
+  <rect x="700" y="152" width="270" height="160" rx="10" fill="#fffbeb" stroke="#f6ad55" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="835" y="176" text-anchor="middle" font-size="12" font-weight="bold" fill="#d69e2e">🤖 Agent 数据浏览</text>
+  <line x1="730" y1="184" x2="940" y2="184" stroke="#f6ad55" stroke-width="0.8"/>
+
+  <circle cx="740" cy="206" r="4" fill="#ed8936"/>
+  <text x="752" y="210" font-size="10" fill="#4a5568">读取表结构、列类型、缺失统计</text>
+
+  <circle cx="740" cy="228" r="4" fill="#ed8936"/>
+  <text x="752" y="232" font-size="10" fill="#4a5568">绘制分布图、时序图、相关性热力图</text>
+
+  <circle cx="740" cy="250" r="4" fill="#ed8936"/>
+  <text x="752" y="254" font-size="10" fill="#4a5568">计算统计量：均值/方差/偏度/峰度</text>
+
+  <circle cx="740" cy="272" r="4" fill="#ed8936"/>
+  <text x="752" y="276" font-size="10" fill="#4a5568">检测异常值、缺失模式、周期性</text>
+
+  <circle cx="740" cy="294" r="4" fill="#ed8936"/>
+  <text x="752" y="298" font-size="10" fill="#4a5568">生成结构化数据摘要供 LLM 决策</text>
+
+</svg>
