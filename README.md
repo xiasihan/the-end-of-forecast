@@ -80,6 +80,62 @@ endforecast deploy --config config.json --mode tool --output ./my_tool
 
 EndForecast runs a rigorous 10-phase pipeline. Every phase produces auditable, inspectable output — you can see exactly why a model was chosen, what alternatives were tested, and how confident the system is in its recommendation.
 
+```
+                        User uploads CSV / Parquet
+                                  │
+         ┌────────────────────────┼────────────────────────┐
+         ▼                        ▼                        ▼
+    Phase 0                 Phase 1                 Phase 2
+  Understand              Understand               Prepare
+   the Goal               the Data               the Data
+         │                        │                        │
+         │  RequirementsSpec      │  ExplorationReport     │  Preprocessing Plan
+         ▼                        ▼                        ▼
+    ┌─────────────────────────────────────────────────────────┐
+    │                    Phase 3                              │
+    │                  LeakGuard                              │
+    │        Enforce temporal boundaries                      │
+    │        (pass ⮕ continue  |  block ⮕ abort)              │
+    └────────────────────────┬────────────────────────────────┘
+                             │ passed
+                             ▼
+    ┌─────────────────────────────────────────────────────────┐
+    │                    Phase 4                              │
+    │               Baseline Runner                           │
+    │     naive · seasonal · linear · heuristic-first check    │
+    └────────────────────────┬────────────────────────────────┘
+                             │ baseline_floor
+                             ▼
+    ┌─────────────────────────────────────────────────────────┐
+    │               Phase 5 · 6 · 7                           │
+    │          Multi-Round Experiment Loop                     │
+    │                                                         │
+    │   Planner (LLM) ⮕ Trials ⮕ Evaluate ⮕ Diagnose (LLM)    │
+    │        ▲                                      │         │
+    │        └────────── adjust strategy ───────────┘         │
+    │                                                         │
+    │   Round 1: broad sweep    (cross-family screening)      │
+    │   Round 2: HPO + refine   (top-K optimization)          │
+    │   Round 3: ensemble       (stacking / voting / routing) │
+    └────────────────────────┬────────────────────────────────┘
+                             │ best trial found
+                             ▼
+    ┌─────────────────────────────────────────────────────────┐
+    │               Phase 8 · 9                               │
+    │        Explain  ⮕  Deploy + Lineage                     │
+    │                                                         │
+    │   SHAP importance  ·  Model Card  ·  Data Hash          │
+    │   Export:  config.json  |  predictor.py  |  CLI tool    │
+    └────────────────────────┬────────────────────────────────┘
+                             │
+                             ▼
+    ┌─────────────────────────────────────────────────────────┐
+    │                    Phase 10                             │
+    │               Continuous Monitoring                     │
+    │   drift detection  ·  skew analysis  ·  freshness score │
+    └─────────────────────────────────────────────────────────┘
+```
+
 **Phase 0 — Understand the goal.** Before touching data: what to predict, what success looks like, what temporal constraints apply. Detects feedback-loop risks (predictions influencing future labels) and proxy-label traps (optimizing the wrong metric).
 
 **Phase 1 — Understand the data.** Schema inference, distribution profiling, fingerprint extraction. Generates a structured natural-language diagnostic narrative (`"Strong seasonality (0.67). Recommend seasonal differencing."`) instead of isolated numbers. Detects label noise and cold-start groups.
@@ -90,11 +146,11 @@ EndForecast runs a rigorous 10-phase pipeline. Every phase produces auditable, i
 
 **Phase 4 — Establish baselines.** Mandatory baselines (naive, seasonal, linear) set a performance floor. If a baseline already meets the user's target: heuristic-first warning.
 
-**Phase 5 — Experiment systematically.** Multi-round, cross-family trials with hyperparameter optimization (Round 2+), stability assessment across random seeds, and optimization-budget tracking (prevents unlimited data snooping).
+**Phase 5 — Experiment systematically.** LLM-driven experiment planning: the Planner agent reads the fingerprint diagnostic and selects models, features, and preprocessing per dataset (no hardcoded model lists). Falls back to sensible defaults when no LLM is configured. Multi-round, cross-family trials with HPO (Round 2+), stability assessment across random seeds, and optimization-budget tracking.
 
 **Phase 6 — Evaluate with rigor.** Multi-metric evaluation, paired t-tests with Bonferroni correction, effect sizes (Cohen's d), calibration assessment (ECE / Brier score), and data-snooping tax annotation.
 
-**Phase 7 — Refine.** Statistical post-processing. Optional judgmental overrides with full audit trail.
+**Phase 7 — Refine.** LLM-driven refinement: the Refiner agent selects the appropriate post-processing method (residual correction, threshold optimization, or statistical clipping) based on error analysis. Falls back to statistical refinement when no LLM is configured. Optional judgmental overrides with full audit trail. Supports ensemble strategies (median, inverse-MASE weighted, stacking) for multi-model combination in later rounds.
 
 **Phase 8 — Explain.** SHAP global + local explanations, permutation importance.
 
@@ -114,8 +170,8 @@ endforecast/
 ├── agents/                    # Intelligence layer
 │   ├── requirements.py        # Phase 0: goal definition, risk detection
 │   ├── explorer.py            # Phase 1: task detection, profiling, noise/hierarchy checks
-│   ├── planner.py             # Phase 5: cross-family experiment design
-│   ├── diagnostician.py       # Phase 7: failure pattern recognition
+│   ├── planner.py             # Phase 5: LLM-driven experiment design (w/fallback)
+│   ├── diagnostician.py       # Phase 7: LLM-driven failure diagnosis (w/fallback)
 │   ├── refiner.py             # Phase 7: statistical + judgmental refinement
 │   └── prompts.py             # LLM system prompts (task-agnostic)
 │
