@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/images/endforecast-banner.svg" alt="EndForecast" width="650">
-</p>
-
 <h2 align="center">The End of Forecast — 预测的终点</h2>
 <p align="center"><sub>给它数据，拿到预测，无需调参。</sub></p>
 

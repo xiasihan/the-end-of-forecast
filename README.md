@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/images/endforecast-banner.svg" alt="EndForecast" width="650">
-</p>
-
 <h2 align="center">The End of Forecast</h2>
 <p align="center"><sub>Give it data. Get predictions. No tuning required.</sub></p>
 
