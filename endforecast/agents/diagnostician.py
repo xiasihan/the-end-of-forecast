@@ -10,7 +10,7 @@ this round's diagnosis).
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from endforecast.engine.trial import TrialResult
@@ -30,7 +30,7 @@ class DiagnosisReport:
     root_cause: str = ""
     adjustment: str = ""
     confidence: str = "medium"
-    findings: list[str] = []
+    findings: list[str] = field(default_factory=list)
     convergence_opinion: str = "continue"
 
 
