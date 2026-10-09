@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 1020" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4a5568"/>
+    </marker>
+    <filter id="shadow" x="-3%" y="-3%" width="108%" height="112%">
+      <feDropShadow dx="0.5" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect width="820" height="1020" fill="#f7fafc" rx="6"/>
+
+  <!-- Title -->
+  <text x="410" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1a202c">EndForecast — 10-Phase Prediction Pipeline</text>
+
+  <!-- Phase 0 -->
+  <rect x="250" y="58" width="320" height="48" rx="8" fill="#e2e8f0" stroke="#a0aec0" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="260" y="80" font-size="12" font-weight="700" fill="#4a5568">Phase 0</text>
+  <text x="260" y="98" font-size="11" fill="#718096">Requirements Gathering</text>
+
+  <line x1="410" y1="106" x2="410" y2="128" stroke="#4a5568" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Phase 1-2 row -->
+  <line x1="200" y1="132" x2="620" y2="132" stroke="#cbd5e0" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <rect x="140" y="136" width="260" height="48" rx="8" fill="#ebf8ff" stroke="#63b3ed" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="150" y="158" font-size="12" font-weight="700" fill="#2b6cb0">Phase 1</text>
+  <text x="150" y="176" font-size="11" fill="#4a5568">Data Understanding</text>
+
+  <rect x="420" y="136" width="260" height="48" rx="8" fill="#ebf8ff" stroke="#63b3ed" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="430" y="158" font-size="12" font-weight="700" fill="#2b6cb0">Phase 2</text>
+  <text x="430" y="176" font-size="11" fill="#4a5568">Data Preparation</text>
+
+  <!-- Arrows down from Phase 1 and 2 -->
+  <line x1="270" y1="184" x2="270" y2="206" stroke="#63b3ed" stroke-width="1"/>
+  <line x1="550" y1="184" x2="550" y2="206" stroke="#63b3ed" stroke-width="1"/>
+
+  <!-- Merge arrow -->
+  <line x1="270" y1="206" x2="550" y2="206" stroke="#63b3ed" stroke-width="1"/>
+  <line x1="410" y1="206" x2="410" y2="230" stroke="#4a5568" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Phase 3 - LeakGuard (gate) -->
+  <rect x="240" y="234" width="340" height="56" rx="10" fill="#fff5f5" stroke="#fc8181" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="250" y="256" font-size="12" font-weight="700" fill="#c53030">Phase 3 ⚠ LeakGuard</text>
+  <text x="250" y="274" font-size="11" fill="#4a5568">Enforce temporal boundaries — pass or block</text>
+
+  <line x1="410" y1="290" x2="410" y2="314" stroke="#38a169" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Phase 4 - Baselines -->
+  <rect x="240" y="318" width="340" height="56" rx="10" fill="#f0fff4" stroke="#68d391" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="250" y="340" font-size="12" font-weight="700" fill="#276749">Phase 4 ◈ Baseline Establishment</text>
+  <text x="250" y="358" font-size="11" fill="#4a5568">Naive · Seasonal · Linear · Heuristic-First Check</text>
+
+  <line x1="410" y1="374" x2="410" y2="400" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Phase 5-6-7 loop box -->
+  <rect x="110" y="404" width="600" height="260" rx="12" fill="#fffbeb" stroke="#f6ad55" stroke-width="1.5"/>
+  <text x="410" y="428" text-anchor="middle" font-size="13" font-weight="700" fill="#d69e2e">Phases 5–7  Multi-Round Experiment Loop</text>
+
+  <rect x="140" y="444" width="160" height="44" rx="8" fill="#fff" stroke="#f6ad55" stroke-width="1" filter="url(#shadow)"/>
+  <text x="145" y="464" font-size="11" font-weight="700" fill="#dd6b20">Phase 5: Experiment</text>
+  <text x="145" y="480" font-size="10" fill="#718096">Planner (LLM-driven)</text>
+
+  <rect x="500" y="444" width="160" height="44" rx="8" fill="#fff" stroke="#f6ad55" stroke-width="1" filter="url(#shadow)"/>
+  <text x="505" y="464" font-size="11" font-weight="700" fill="#dd6b20">Phase 6: Evaluate</text>
+  <text x="505" y="480" font-size="10" fill="#718096">Metrics · t-test · Calibration</text>
+
+  <rect x="320" y="504" width="160" height="44" rx="8" fill="#fff" stroke="#f6ad55" stroke-width="1" filter="url(#shadow)"/>
+  <text x="325" y="524" font-size="11" font-weight="700" fill="#dd6b20">Phase 7: Refine</text>
+  <text x="325" y="540" font-size="10" fill="#718096">Diagnose · Ensemble</text>
+
+  <!-- Arrows inside the loop -->
+  <line x1="300" y1="466" x2="498" y2="466" stroke="#f6ad55" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="500" y1="488" x2="400" y2="502" stroke="#f6ad55" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="320" y1="526" x2="202" y2="466" stroke="#f6ad55" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <text x="180" y="580" font-size="10" fill="#d69e2e">R1: Broad sweep</text>
+  <text x="180" y="594" font-size="10" fill="#d69e2e">R2: HPO + refine</text>
+  <text x="180" y="608" font-size="10" fill="#d69e2e">R3: Ensemble</text>
+  
+  <text x="420" y="576" font-size="10" fill="#d69e2e">→ adjust strategy → repeat</text>
+
+  <!-- Loop convergence note -->
+  <text x="410" y="620" text-anchor="middle" font-size="10" fill="#ed8936">Repeat until convergence or budget exhausted</text>
+
+  <text x="410" y="646" text-anchor="middle" font-size="10" fill="#d69e2e">Optimization budget tracks degrees of freedom consumed</text>
+
+  <line x1="410" y1="664" x2="410" y2="692" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Phase 8-9 -->
+  <rect x="140" y="696" width="260" height="48" rx="8" fill="#faf5ff" stroke="#b794f4" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="150" y="718" font-size="12" font-weight="700" fill="#6b46c1">Phase 8</text>
+  <text x="150" y="736" font-size="11" fill="#4a5568">Interpretation · SHAP</text>
+
+  <rect x="420" y="696" width="260" height="48" rx="8" fill="#faf5ff" stroke="#b794f4" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="430" y="718" font-size="12" font-weight="700" fill="#6b46c1">Phase 9</text>
+  <text x="430" y="736" font-size="11" fill="#4a5568">Deploy · Model Card · Lineage</text>
+
+  <line x1="270" y1="744" x2="270" y2="766" stroke="#b794f4" stroke-width="1"/>
+  <line x1="550" y1="744" x2="550" y2="766" stroke="#b794f4" stroke-width="1"/>
+  <line x1="270" y1="766" x2="550" y2="766" stroke="#b794f4" stroke-width="1"/>
+  <line x1="410" y1="766" x2="410" y2="790" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Export tracks -->
+  <rect x="160" y="794" width="500" height="48" rx="8" fill="#edf2f7" stroke="#a0aec0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="180" y="816" font-size="10" fill="#4a5568">Export:</text>
+  <rect x="240" y="804" width="120" height="28" rx="14" fill="#fff" stroke="#a0aec0" stroke-width="1"/>
+  <text x="300" y="823" text-anchor="middle" font-size="10" fill="#4a5568">config.json</text>
+  <rect x="372" y="804" width="120" height="28" rx="14" fill="#fff" stroke="#a0aec0" stroke-width="1"/>
+  <text x="432" y="823" text-anchor="middle" font-size="10" fill="#4a5568">predictor.py</text>
+  <rect x="504" y="804" width="120" height="28" rx="14" fill="#fff" stroke="#a0aec0" stroke-width="1"/>
+  <text x="564" y="823" text-anchor="middle" font-size="10" fill="#4a5568">CLI tool</text>
+
+  <line x1="410" y1="842" x2="410" y2="868" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Phase 10 -->
+  <rect x="240" y="872" width="340" height="56" rx="10" fill="#e2e8f0" stroke="#a0aec0" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="250" y="894" font-size="12" font-weight="700" fill="#4a5568">Phase 10 — Continuous Monitoring</text>
+  <text x="250" y="912" font-size="11" fill="#718096">Drift Detection · Skew Analysis · Freshness Scoring</text>
+
+  <!-- Right side legend -->
+  <rect x="660" y="136" width="140" height="280" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
+  <text x="730" y="158" text-anchor="middle" font-size="12" font-weight="700" fill="#2d3748">Key Features</text>
+  <line x1="672" y1="166" x2="788" y2="166" stroke="#e2e8f0" stroke-width="0.8"/>
+  <circle cx="678" cy="186" r="4" fill="#fc8181"/>
+  <text x="690" y="190" font-size="10" fill="#4a5568">LeakGuard</text>
+  <circle cx="678" cy="210" r="4" fill="#68d391"/>
+  <text x="690" y="214" font-size="10" fill="#4a5568">Heuristic First</text>
+  <circle cx="678" cy="234" r="4" fill="#f6ad55"/>
+  <text x="690" y="238" font-size="10" fill="#4a5568">LLM-driven</text>
+  <circle cx="678" cy="258" r="4" fill="#63b3ed"/>
+  <text x="690" y="262" font-size="10" fill="#4a5568">Statistical rigor</text>
+  <circle cx="678" cy="282" r="4" fill="#b794f4"/>
+  <text x="690" y="286" font-size="10" fill="#4a5568">3-track deploy</text>
+  <circle cx="678" cy="306" r="4" fill="#a0aec0"/>
+  <text x="690" y="310" font-size="10" fill="#4a5568">Monitoring</text>
+
+</svg>

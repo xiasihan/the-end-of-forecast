@@ -81,7 +81,7 @@ endforecast deploy --config config.json --mode tool --output ./my_tool
 EndForecast 执行一个严谨的 10 阶段流程，每个阶段都产出可审计、可回溯的输出。你能确切地知道为什么选了某个模型、测试过哪些替代方案、系统对结论有多大把握。
 
 <p align="center">
-  <img src="docs/images/automation_closed_loop.svg" alt="流程图" width="700">
+  <img src="docs/images/pipeline_flow_cn.svg" alt="流程图" width="700">
 </p>
 
 **阶段 0 — 理解目标。** 接触数据之前先弄清：预测什么、成功标准是什么、有哪些时间约束。检测反馈循环风险（预测结果反过来影响未来的训练标签）和代理标签陷阱（优化了错误的指标而非真正的业务目标）。

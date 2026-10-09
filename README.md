@@ -81,7 +81,7 @@ endforecast deploy --config config.json --mode tool --output ./my_tool
 EndForecast runs a rigorous 10-phase pipeline. Every phase produces auditable, inspectable output — you can see exactly why a model was chosen, what alternatives were tested, and how confident the system is in its recommendation.
 
 <p align="center">
-  <img src="docs/images/automation_closed_loop.svg" alt="Pipeline" width="700">
+  <img src="docs/images/pipeline_flow_en.svg" alt="Pipeline" width="700">
 </p>
 
 **Phase 0 — Understand the goal.** Before touching data: what to predict, what success looks like, what temporal constraints apply. Detects feedback-loop risks (predictions influencing future labels) and proxy-label traps (optimizing the wrong metric).
