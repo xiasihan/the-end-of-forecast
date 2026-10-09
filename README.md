@@ -80,61 +80,9 @@ endforecast deploy --config config.json --mode tool --output ./my_tool
 
 EndForecast runs a rigorous 10-phase pipeline. Every phase produces auditable, inspectable output — you can see exactly why a model was chosen, what alternatives were tested, and how confident the system is in its recommendation.
 
-```
-                        User uploads CSV / Parquet
-                                  │
-         ┌────────────────────────┼────────────────────────┐
-         ▼                        ▼                        ▼
-    Phase 0                 Phase 1                 Phase 2
-  Understand              Understand               Prepare
-   the Goal               the Data               the Data
-         │                        │                        │
-         │  RequirementsSpec      │  ExplorationReport     │  Preprocessing Plan
-         ▼                        ▼                        ▼
-    ┌─────────────────────────────────────────────────────────┐
-    │                    Phase 3                              │
-    │                  LeakGuard                              │
-    │        Enforce temporal boundaries                      │
-    │        (pass ⮕ continue  |  block ⮕ abort)              │
-    └────────────────────────┬────────────────────────────────┘
-                             │ passed
-                             ▼
-    ┌─────────────────────────────────────────────────────────┐
-    │                    Phase 4                              │
-    │               Baseline Runner                           │
-    │     naive · seasonal · linear · heuristic-first check    │
-    └────────────────────────┬────────────────────────────────┘
-                             │ baseline_floor
-                             ▼
-    ┌─────────────────────────────────────────────────────────┐
-    │               Phase 5 · 6 · 7                           │
-    │          Multi-Round Experiment Loop                     │
-    │                                                         │
-    │   Planner (LLM) ⮕ Trials ⮕ Evaluate ⮕ Diagnose (LLM)    │
-    │        ▲                                      │         │
-    │        └────────── adjust strategy ───────────┘         │
-    │                                                         │
-    │   Round 1: broad sweep    (cross-family screening)      │
-    │   Round 2: HPO + refine   (top-K optimization)          │
-    │   Round 3: ensemble       (stacking / voting / routing) │
-    └────────────────────────┬────────────────────────────────┘
-                             │ best trial found
-                             ▼
-    ┌─────────────────────────────────────────────────────────┐
-    │               Phase 8 · 9                               │
-    │        Explain  ⮕  Deploy + Lineage                     │
-    │                                                         │
-    │   SHAP importance  ·  Model Card  ·  Data Hash          │
-    │   Export:  config.json  |  predictor.py  |  CLI tool    │
-    └────────────────────────┬────────────────────────────────┘
-                             │
-                             ▼
-    ┌─────────────────────────────────────────────────────────┐
-    │                    Phase 10                             │
-    │               Continuous Monitoring                     │
-    │   drift detection  ·  skew analysis  ·  freshness score │
-    └─────────────────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="docs/images/automation_closed_loop.svg" alt="Pipeline" width="700">
+</p>
 
 **Phase 0 — Understand the goal.** Before touching data: what to predict, what success looks like, what temporal constraints apply. Detects feedback-loop risks (predictions influencing future labels) and proxy-label traps (optimizing the wrong metric).
 
