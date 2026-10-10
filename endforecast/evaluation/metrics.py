@@ -56,7 +56,7 @@ class MetricCalculator:
 
     _METRICS: dict[str, Callable] = {
         # Classification
-        "accuracy": lambda y, yp, kw: float(np.mean(y == (yp >= 0.5))),
+        "accuracy": lambda y, yp, kw: float(np.mean((y.astype(int)) == (yp >= 0.5).astype(int))),
         "f1": lambda y, yp, kw: _f1_score(y, (yp >= 0.5)),
         "precision": lambda y, yp, kw: _precision(y, (yp >= 0.5)),
         "recall": lambda y, yp, kw: _recall(y, (yp >= 0.5)),

@@ -125,11 +125,22 @@ class DataExplorer:
     def _make_suggestions(self, task_type: str, fp: FeatureFingerprint) -> dict:
         s = {"suggested_models": [], "suggested_metrics": [], "suggested_features": []}
         if task_type == "classification":
-            s["suggested_models"] = ["lightgbm", "xgboost", "random_forest", "logistic"]
+            s["suggested_models"] = ["logistic", "lightgbm", "xgboost", "random_forest"]
             s["suggested_metrics"] = ["accuracy", "f1", "auc"]
+            # Calendar features when time column exists
+            s["suggested_features"].extend(["hour", "day_of_week"])
+            if fp.seasonal_strength > 0.2:
+                s["suggested_features"].extend(["month"])
+            if abs(fp.acf1) > 0.3:
+                s["suggested_features"].extend(["lag_24"])
         elif task_type == "regression":
-            s["suggested_models"] = ["lightgbm", "xgboost", "ridge", "linear"]
+            s["suggested_models"] = ["ridge", "lightgbm", "xgboost", "random_forest"]
             s["suggested_metrics"] = ["mae", "mape", "rmse"]
+            s["suggested_features"].extend(["hour", "day_of_week"])
+            if fp.seasonal_strength > 0.2:
+                s["suggested_features"].extend(["month"])
+            if abs(fp.acf1) > 0.3:
+                s["suggested_features"].extend(["lag_24", "lag_168"])
         else:
             s["suggested_models"] = ["ridge", "lightgbm", "xgboost", "random_forest"]
             s["suggested_metrics"] = ["mase", "smape"]

@@ -65,6 +65,7 @@ class ExperimentPlanner:
         route: Route = Route.STANDARD,
         max_trials: int = 30,
         llm_suggestions: Optional[dict] = None,
+        primary_metric: Optional[str] = None,
     ) -> ExperimentPlan:
         """Design an experiment plan.
 
@@ -77,17 +78,32 @@ class ExperimentPlanner:
                 "features": [["lag_24","hour"], ["lag_24","lag_168","hour"], ...]
                 "preprocessing": [["standard_scaler"], ...]
                 "rationale": "LLM's reasoning"
+            primary_metric: Optional metric override from LLM experiment
+                configurator. If None, uses report.suggested_metrics[0].
 
         Returns:
             ExperimentPlan ready for execution.
         """
+        metric = primary_metric or (report.suggested_metrics[0] if report.suggested_metrics else "mase")
         if llm_suggestions:
-            return self._plan_from_llm(report, route, max_trials, llm_suggestions)
-        return self._plan_fallback(report, route, max_trials)
+            self._log_suggestions(llm_suggestions)
+            return self._plan_from_llm(report, route, max_trials, llm_suggestions, metric)
+        return self._plan_fallback(report, route, max_trials, metric)
+
+    @staticmethod
+    def _log_suggestions(suggestions: dict) -> None:
+        models = suggestions.get("models", [])
+        feats = suggestions.get("features", [])
+        for m in models[:3]:
+            logger.info("  LLM model: %s preproc=%s",
+                        m.get("name", "?") if isinstance(m, dict) else str(m),
+                        m.get("preprocessing", []) if isinstance(m, dict) else "[]")
+        for f in feats[:5]:
+            logger.info("  LLM feature combo: %s", f)
 
     def _plan_from_llm(
         self, report: ExplorationReport, route: Route, max_trials: int,
-        suggestions: dict,
+        suggestions: dict, metric: str = "mase",
     ) -> ExperimentPlan:
         """Build a plan from LLM suggestions."""
         models = suggestions.get("models", [{"name": "ridge"}])
@@ -95,12 +111,29 @@ class ExperimentPlanner:
         preprocesses = suggestions.get("preprocessing", [[]])
         rationale = suggestions.get("rationale", "LLM-driven plan")
 
+        # ── Safety: filter out empty feature lists ──────────────
+        feature_combos = [
+            f for f in feature_combos
+            if isinstance(f, list) and len(f) > 0
+        ]
+        if not feature_combos:
+            # Fallback: use basic lag features for time series
+            if isinstance(report, ExplorationReport) and report.task_type == "timeseries":
+                feature_combos = [["lag_1"]]
+            else:
+                feature_combos = [["hour", "day_of_week"]]
+
         trials: list[Trial] = []
         tid = 0
         for model_info in models:
             name = model_info["name"] if isinstance(model_info, dict) else model_info
             name_str = str(name)
-            for preproc in preprocesses:
+            # Per-model preprocessing (LLM-driven) or fallback to top-level
+            if isinstance(model_info, dict) and "preprocessing" in model_info:
+                per_model_preproc = [model_info["preprocessing"]]
+            else:
+                per_model_preproc = preprocesses
+            for preproc in per_model_preproc:
                 for feats in feature_combos:
                     if tid >= max_trials:
                         break
@@ -112,7 +145,7 @@ class ExperimentPlanner:
                         model_params=model_info.get("params", {}) if isinstance(model_info, dict) else {},
                         cv_strategy=self._pick_cv(report),
                         task_type=report.task_type,
-                        metric=report.suggested_metrics[0] if report.suggested_metrics else "mase",
+                        metric=metric,
                         hypothesis=rationale[:100] if tid == 0 else "",
                     ))
                     tid += 1
@@ -126,6 +159,7 @@ class ExperimentPlanner:
 
     def _plan_fallback(
         self, report: ExplorationReport, route: Route, max_trials: int,
+        metric: str = "mase",
     ) -> ExperimentPlan:
         """Fallback plan when no LLM is available."""
         models = self._fallback_models(report, route)
@@ -147,7 +181,7 @@ class ExperimentPlanner:
                         model_params=model_info.get("params", {}),
                         cv_strategy=self._pick_cv(report),
                         task_type=report.task_type,
-                        metric=report.suggested_metrics[0] if report.suggested_metrics else "mase",
+                        metric=metric,
                     ))
                     tid += 1
 

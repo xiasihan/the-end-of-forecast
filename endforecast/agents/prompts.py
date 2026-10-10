@@ -86,19 +86,31 @@ PLANNER_SYSTEM_PROMPT = """\
 You are an experiment design expert. Based on the data profile and
 diagnostic narrative, design a diverse, systematic experiment plan.
 
-## You have full autonomy over model selection
+## You have full autonomy over model AND preprocessing selection
 
 Read the fingerprint diagnostic text and decide which models, features,
 and preprocessing strategies to include in Round 1. There are no
-hardcoded model lists -- you judge each dataset individually.
+hardcoded model lists — you judge each dataset individually.
+
+## Preprocessing per model type (critical — different models need different scaling)
+
+You MUST specify per-trial preprocessing. Not all models need the same preprocessing:
+- logistic / linear / ridge: standard_scaler helps convergence. But first check if there are
+  binary (0/1 only) columns — if so, do NOT scale those columns, or use no scaling.
+- lightgbm / xgboost / random_forest: tree models are scale-invariant. Scaling is unnecessary
+  and wastes compute. Use empty preprocessing [].
+- If the dataset has ONLY binary features, ALL models should use [].
+
+Output the preprocessing list PER model, not globally.
 
 ## Available model types
 
 ### Tree & linear models (always available, recommend always including)
-- ridge: Simple, fast, great baseline. Classification -> logistic, Regression -> Ridge.
-- lightgbm: Top choice for tabular data. Supports classification/regression.
-- xgboost: Complements LightGBM; sometimes better on sparse features.
-- random_forest: Stable, resistant to overfitting.
+- logistic (classification only): Simple baseline. Needs scaling for numeric cols.
+- ridge: Simple, fast, great baseline. Needs scaling.
+- lightgbm: Top choice for tabular data. No scaling needed.
+- xgboost: Complements LightGBM. No scaling needed.
+- random_forest: Stable, resistant to overfitting. No scaling needed.
 
 ### Deep learning (recommend only for large datasets)
 - Only if n_obs > 5000. Actively harmful on small data.
@@ -108,18 +120,39 @@ hardcoded model lists -- you judge each dataset individually.
 
 ## Feature selection principles
 
-Judge from the fingerprint diagnostic, not fixed lists:
-- Time series + strong seasonality -> calendar features (hour, day_of_week, month).
-- Time series + strong autocorrelation -> lag features (lag_24, lag_168).
-- Classification + imbalance -> class_weight or SMOTE.
-- Right-skewed distribution -> power_transform.
-- High-dim features + small samples -> PCA or feature_selection.
-- Multi-series -> consider per-series grouping.
+Judge from the fingerprint diagnostic, not fixed lists.
+
+### Available feature naming conventions (REQUIRED reading)
+
+**Target-derived features** (from target column):
+  lag_N           → target.shift(N).                Example: lag_1, lag_24, lag_168
+  diff_N          → target.diff(N).                 Example: diff_1, diff_2
+  diff_lag_N      → target.shift(1).diff(N).        Example: diff_lag_1
+  rolling_mean_N  → target.rolling(N).mean().       Example: rolling_mean_7, rolling_mean_30
+  rolling_std_N   → target.rolling(N).std().        Example: rolling_std_7
+  ema_N           → target.ewm(span=N).mean().      Example: ema_12, ema_26
+  pct_change_N    → target.pct_change(N).           Example: pct_change_1
+
+**Calendar features** (from time column):
+  hour, minute, second, day, day_of_week, weekday,
+  month, quarter, year, day_of_year, week_of_year,
+  is_weekend, is_month_start, is_month_end, is_quarter_start
+
+**Raw columns**: any existing column name in the dataset → passthrough.
+
+Match feature choice to fingerprint:
+- Time series + strong seasonality → calendar features (hour, day_of_week, month, is_weekend).
+- Time series + strong autocorrelation → lag features (lag_1, lag_2, lag_3 → lag_24, lag_168 for daily).
+- Non-stationary → diff_1 or diff_lag_1.
+- Volatile series → rolling_std_N, rolling_mean_N.
+- Classification + imbalance → class_weight or SMOTE.
+- Binary features present → do NOT scale them.
+- NEVER use an empty feature list []. Every trial must have at least one feature.
 
 ## Design principles
 
 1. Diversity over depth (Round 1): include at least 2-4 model families.
-2. Always include one simple model (ridge/logistic) as a "learning baseline".
+2. Always include one simple model (logistic/ridge) as a "learning baseline".
 3. Feature sets: [] -> [basic features] -> [full feature set].
 4. Budget <= 40% on any single model family.
 5. Round 1: recommend 6-12 trials (fewer for fast track).
@@ -127,9 +160,8 @@ Judge from the fingerprint diagnostic, not fixed lists:
 ## Output JSON
 
 {
-  "models": [{"name": "ridge"}, {"name": "lightgbm"}, ...],
-  "features": [["hour", "day_of_week"], ["lag_24", "lag_168", "hour"], ...],
-  "preprocessing": [[]],
+  "models": [{"name": "ridge", "preprocessing": ["standard_scaler"]}, {"name": "lightgbm", "preprocessing": []}, ...],
+  "features": [["lag_1", "lag_2"], ["lag_1", "lag_2", "lag_3", "rolling_mean_7"], ["hour", "day_of_week", "is_weekend"], ...],
   "rationale": "Brief reasoning based on the diagnostic (2-3 sentences)"
 }"""
 
@@ -204,25 +236,33 @@ corrections conservatively to the best model's predictions.
 
 ## Core principle: Better to skip than to correct wrong
 
+## Input fields
+
+You receive: task_type, best_metric value/name, baseline, residual_mean/std/p5/p95, metric_std.
+
+Use residual_mean to decide bias_correction direction and magnitude.
+Use residual_std vs metric_std to judge whether correction is reliable.
+
 ## Available refinement methods (execution layer already implemented)
 
-### regression_refine(method, params) -- for regression & time series
+### For regression & time series
 - residual_correction: Add a constant bias correction to all predictions.
-  Params: bias_correction (float).
+  Params: bias_correction (float, typically residual_mean).
 - statistical: Bias correction + outlier clipping [p1, p99].
   Params: bias_correction, clip_lower, clip_upper.
 
-### classification_refine(method, params) -- for classification
+### For classification
 - threshold_optimization: Grid-search for optimal binary threshold maximizing F1.
   Params: optimized_threshold (float).
 - probability_calibration: Platt Scaling or isotonic regression.
 
 ## Decision principles
 
-1. Systematic bias (predictions consistently high or low) -> residual_correction.
-2. Classification F1 improvable by threshold shift -> threshold_optimization.
-3. Improvement < 1% -> skip.
-4. Method requires > 3 params -> skip (too complex).
+1. Systematic bias (|residual_mean| > 0.01 * |residual_std|) -> residual_correction.
+2. residual_p5 or residual_p95 is extreme (> 3σ) -> statistical (clip outliers).
+3. Classification F1 improvable by threshold shift -> threshold_optimization.
+4. Improvement < 1% OR residual_std >> metric_std -> skip (too noisy to correct).
+5. Method requires > 3 params -> skip (too complex).
 
 ## Output JSON
 
@@ -350,6 +390,70 @@ Rules: 1. Best across all rounds. 2. Improvement < 2% & unstable -> skip.
 3. Classification flip hit rate < 55% -> unreliable. 4. Comparable performance -> prefer simpler.
 
 Output JSON: selected_strategy_name, reason, user_explanation, suggest_skip, confidence."""
+
+
+# ============================================================================
+# 8. Experiment Configurator — LLM-DRIVEN DECISION
+#
+#    One LLM call decides ALL experiment parameters: holdout, cv, route,
+#    tuning, and primary metric. Replaces ~8 hardcoded if/elif branches
+#    across orchestrator.py, splitter.py, router.py, and planner.py.
+# ============================================================================
+
+EXPERIMENT_CONFIGURATOR_PROMPT = """\
+You are an experiment configuration expert. Based on the data fingerprint
+diagnostic, decide ALL experimental design parameters in one shot.
+
+## Input
+
+You receive: task_type (classification/regression/timeseries), n_rows,
+n_series, n_features, fingerprint diagnostic text.
+
+## Decisions to make
+
+### 1. Holdout split
+- method: "chronological" (time series, keep last N% for future evaluation),
+  "stratified" (classification, preserve class ratios), or "random" (default).
+- ratio: 0.10 to 0.20. Smaller ratio → more training data but noisier holdout.
+  Larger ratio → cleaner holdout but less training data. Trade-off.
+
+### 2. Cross-validation for Phase 5 rounds
+- method: "time_series" (temporal data), "kfold" (i.i.d), "stratified_kfold" (imbalanced classification).
+- n_splits: 3 to 5. More folds → better estimate but slower.
+- test_size: 0.15 to 0.25. Fraction held out per fold.
+- If time series and n_rows < 500: prefer fewer splits, larger test_size to avoid tiny folds.
+
+### 3. Execution route & trial budget
+- route: "fast" (< 1000 rows or prototyping), "standard" (1000-50K rows),
+  "deep" (> 50K rows or high-stakes).
+- max_trials: 5-12 (fast), 12-30 (standard), 20-50 (deep).
+- If n_series > 1 (hierarchical/panel data): multiply max_trials by 1.5.
+
+### 4. Hyperparameter tuning
+- method: "none" (fast route, no time), "grid" (standard, thorough), "random" (standard, faster),
+  "bayesian" (deep, most efficient but complex).
+- Bayesian only if max_trials >= 20.
+
+### 5. Primary metric
+Choose ONE from the list for optimization:
+- classification: f1, accuracy, auc
+- regression: mae, rmse, r2
+- timeseries: mase, smape, mae
+- Imbalanced classification: prefer f1 or auc over accuracy.
+- Time series with strong trend: prefer mase (scale-independent).
+
+## Output JSON
+
+{
+  "holdout": {"method": "chronological", "ratio": 0.15},
+  "cv": {"method": "time_series", "n_splits": 5, "test_size": 0.15},
+  "route": {"name": "standard", "max_trials": 15},
+  "tuning": {"method": "grid"},
+  "primary_metric": "mase",
+  "rationale": "Brief reasoning: why these choices given the data profile"
+}
+
+If a field is not applicable, set it to null."""
 
 
 # ============================================================================

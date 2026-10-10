@@ -176,7 +176,7 @@ class Pipeline:
         return self
 
     def predict(
-        self, df: pd.DataFrame, time_col: Optional[str] = "ds"
+        self, df: pd.DataFrame, target_col: str = "y", time_col: Optional[str] = "ds"
     ) -> PipelineResult:
         """Generate predictions for new data.
 
@@ -194,7 +194,7 @@ class Pipeline:
             raise RuntimeError("Pipeline must be fitted before prediction.")
 
         processed = self._preprocess(df, fit=False)
-        X, _ = self._engineer_features(processed, None, time_col, fit=False)
+        X, _ = self._engineer_features(processed, target_col, time_col, fit=False)
         raw_pred = self._model_predict(X)
         refined_pred, refinement_report = raw_pred, None
         if self.config.refinement and self.config.refinement.get("type", "none") != "none":
@@ -237,13 +237,17 @@ class Pipeline:
     # ── Internal Methods ──────────────────────────────────────────
 
     def _preprocess(self, df: pd.DataFrame, fit: bool = False) -> pd.DataFrame:
-        """Apply all configured preprocessing steps."""
+        """Apply all configured preprocessing steps.
+
+        The preprocessing list is per-trial, decided by the LLM-driven Planner.
+        Different models need different scaling strategies. The Planner decides this.
+        """
         result = df.copy()
         for step in self.config.preprocess:
             if step == "standard_scaler":
                 from sklearn.preprocessing import StandardScaler
                 scaler = StandardScaler()
-                numeric_cols = result.select_dtypes(include=[np.number]).columns
+                numeric_cols = result.select_dtypes(include=[np.number]).columns.tolist()
                 if len(numeric_cols) == 0:
                     continue
                 if fit:
@@ -262,22 +266,128 @@ class Pipeline:
         time_col: Optional[str],
         fit: bool = False,
     ) -> tuple[pd.DataFrame, Optional[np.ndarray]]:
-        """Construct features according to the configuration."""
+        """Construct features according to the configuration.
+
+        Generic feature parser: the LLM dictates feature names, the engine
+        parses them and applies the computation. No hardcoded feature list.
+
+        Naming conventions (LLM can use any):
+          lag_N          → target.shift(N)
+          diff_N         → target.diff(N)
+          diff_lag_N     → target.shift(1).diff(N)   [diff of lags]
+          rolling_mean_N → target.rolling(N).mean()
+          rolling_std_N  → target.rolling(N).std()
+          ema_N          → target.ewm(span=N).mean()
+          pct_change_N   → target.pct_change(N)
+
+        Calendar features (from time_col, any coined by LLM):
+          hour, minute, second, day, day_of_week, weekday,
+          month, quarter, year, day_of_year, week_of_year,
+          is_weekend, is_month_start, is_month_end, is_quarter_start
+
+        Any other string → treated as a raw column name (passthrough).
+        """
         result = df.copy()
+
+        _CALENDAR = {
+            "hour": "hour", "minute": "minute", "second": "second",
+            "day": "day", "day_of_week": "dayofweek", "weekday": "dayofweek",
+            "month": "month", "quarter": "quarter", "year": "year",
+            "day_of_year": "dayofyear", "week_of_year": "week",
+            "is_weekend": "_is_weekend", "is_month_start": "is_month_start",
+            "is_month_end": "is_month_end", "is_quarter_start": "is_quarter_start",
+        }
+
         for feat in self.config.features:
-            if feat.startswith("lag_") and target_col is not None and target_col in result.columns:
-                lag = int(feat.replace("lag_", ""))
-                result[feat] = result[target_col].shift(lag)
-            elif feat in {"day_of_week", "hour", "month", "year"} and time_col and time_col in result.columns:
-                dt = pd.to_datetime(result[time_col])
-                if feat == "day_of_week":
-                    result["day_of_week"] = dt.dt.dayofweek
-                elif feat == "hour":
-                    result["hour"] = dt.dt.hour
-                elif feat == "month":
-                    result["month"] = dt.dt.month
-                elif feat == "year":
-                    result["year"] = dt.dt.year
+            feat_str = str(feat)
+            added = False
+
+            # ── Target-derived features ─────────────────────────
+            if target_col is not None and target_col in result.columns:
+                y_series = result[target_col]
+
+                # lag_N
+                if feat_str.startswith("lag_"):
+                    try:
+                        lag = int(feat_str.replace("lag_", ""))
+                        result[feat_str] = y_series.shift(lag)
+                        added = True
+                    except ValueError:
+                        pass
+
+                # diff_lag_N (diff of lagged values, e.g. diff_lag_1 = diff of lag_1)
+                elif feat_str.startswith("diff_lag_"):
+                    try:
+                        n = int(feat_str.replace("diff_lag_", ""))
+                        result[feat_str] = y_series.shift(1).diff(n)
+                        added = True
+                    except ValueError:
+                        pass
+
+                # diff_N (raw diff of target)
+                elif feat_str.startswith("diff_"):
+                    try:
+                        n = int(feat_str.replace("diff_", ""))
+                        result[feat_str] = y_series.diff(n)
+                        added = True
+                    except ValueError:
+                        pass
+
+                # rolling_mean_N
+                elif feat_str.startswith("rolling_mean_"):
+                    try:
+                        n = int(feat_str.replace("rolling_mean_", ""))
+                        result[feat_str] = y_series.rolling(n, min_periods=1).mean()
+                        added = True
+                    except ValueError:
+                        pass
+
+                # rolling_std_N
+                elif feat_str.startswith("rolling_std_"):
+                    try:
+                        n = int(feat_str.replace("rolling_std_", ""))
+                        result[feat_str] = y_series.rolling(n, min_periods=1).std()
+                        added = True
+                    except ValueError:
+                        pass
+
+                # ema_N (exponential moving average)
+                elif feat_str.startswith("ema_"):
+                    try:
+                        n = int(feat_str.replace("ema_", ""))
+                        result[feat_str] = y_series.ewm(span=n, adjust=False).mean()
+                        added = True
+                    except ValueError:
+                        pass
+
+                # pct_change_N
+                elif feat_str.startswith("pct_change_"):
+                    try:
+                        n = int(feat_str.replace("pct_change_", ""))
+                        result[feat_str] = y_series.pct_change(n)
+                        added = True
+                    except ValueError:
+                        pass
+
+            # ── Calendar features ───────────────────────────────
+            if not added and time_col and time_col in result.columns:
+                cal_key = _CALENDAR.get(feat_str)
+                if cal_key is not None:
+                    dt = pd.to_datetime(result[time_col])
+                    if cal_key == "_is_weekend":
+                        result[feat_str] = (dt.dt.dayofweek >= 5).astype(int)
+                    elif cal_key == "is_quarter_start":
+                        result[feat_str] = dt.dt.is_quarter_start.astype(int)
+                    else:
+                        result[feat_str] = getattr(dt.dt, cal_key)
+                    added = True
+
+            # ── Passthrough: raw column ─────────────────────────
+            if not added:
+                if feat_str in result.columns:
+                    result[feat_str] = result[feat_str]
+                    added = True
+
         result = result.dropna()
         y = None
         if target_col is not None and target_col in result.columns:

@@ -47,8 +47,9 @@ class StorageConfig:
 class ExperimentConfig:
     """Experiment runtime configuration."""
 
-    max_rounds: int = 10
+    max_rounds: int = 3
     top_k: int = 5
+    holdout_ratio: float = 0.15
     convergence_threshold: float = 0.01
     parallel_execution: bool = True
     max_workers: int = 4

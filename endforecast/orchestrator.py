@@ -7,19 +7,20 @@ Phases:
   1. Data Understanding (Exploration + EDA)
   2. Data Preparation (Preprocessing)
   3. LeakGuard Check
-  4. Baseline Establishment ← NEW
+  4. Baseline Establishment
   5. Experiment Planning & Execution
   6. Evaluation & Error Analysis
   7. Iterative Refinement (Diagnostician + Refiner)
-  8. Interpretation & Explainability ← NEW
+  8. Interpretation & Explainability
   9. Deployment
- 10. Drift Detection ← NEW
+ 10. Drift Detection
 
 All phases are task-agnostic (classification / regression / time series).
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -104,8 +105,14 @@ class RunResult:
             if self.baseline_result and self.baseline_result.best:
                 impr = (self.best_trial.metric_value - self.baseline_result.baseline_floor) / self.baseline_result.baseline_floor * 100
                 lines.append(f"  Improvement vs Baseline: {impr:.1f}%")
-        if self.explainability_result:
-            lines.append(f"  Top Features: {[f for f, _ in self.explainability_result.top_features(3)]}")
+        if self.metric_tiers.get("refinement_score") is not None:
+            lines.append(f"  Refinement Score: {self.metric_tiers['refinement_score']:.4f}")
+        if self.metric_tiers.get("ensemble_score") is not None:
+            lines.append(f"  Ensemble Score: {self.metric_tiers['ensemble_score']:.4f}")
+        if self.explainability_result and hasattr(self.explainability_result, 'top_features'):
+            top_feats = self.explainability_result.top_features
+            if hasattr(top_feats, '__iter__'):
+                lines.append(f"  Top Features: {list(top_feats)[:3]}")
         if self.optimization_budget:
             lines.append(f"  Degrees of Freedom: {self.optimization_budget.summary()}")
         if self.metric_tiers:
@@ -188,7 +195,6 @@ class EndForecast:
 
         report = self.explorer.explore(df, time_col=time_col, target_col=target_col, id_col=id_col)
         result.report = report
-        # ── Diagnostic text for LLM agent (structured narrative, not isolated numbers)
         logger.info("  Diagnostic narrative:\n%s", report.fingerprint.diagnostic)
         if report.fingerprint.tags.get("is_cold_start"):
             result.metric_tiers["cold_start_detected"] = True
@@ -211,16 +217,117 @@ class EndForecast:
                 return result
             logger.info("  PASSED")
 
+        # ═══════════════════════════════════════════════════════════
+        # ── LLM-driven experiment configuration ────────────────
+        #   One LLM call decides: holdout, cv, route, tuning, metric.
+        #   Must run BEFORE Phase 4 so baseline uses the same metric.
+        #   Replaces ~8 hardcoded if/elif branches.
+        # ═══════════════════════════════════════════════════════════
+        n_raw_features = len(df.columns) - len({target_col, time_col, id_col, "date_time", "unique_id"} & set(df.columns))
+        n_series_val = df[id_col].nunique() if (id_col and id_col in df.columns) else 1
+
+        llm_exp_config: Optional[dict] = None
+        try:
+            from endforecast._llm import experiment_configurator
+            llm_exp_config = experiment_configurator(
+                report.fingerprint.diagnostic[:4000],
+                report.task_type, len(df), n_series_val, n_raw_features,
+            )
+            if llm_exp_config:
+                logger.info("  LLM experiment config: holdout=%s, cv=%s, route=%s, tuning=%s, metric=%s",
+                            llm_exp_config.get("holdout", {}).get("method", "?"),
+                            llm_exp_config.get("cv", {}).get("method", "?"),
+                            llm_exp_config.get("route", {}).get("name", "?"),
+                            llm_exp_config.get("tuning", {}).get("method", "?"),
+                            llm_exp_config.get("primary_metric", "?"))
+                logger.info("  rationale: %s", llm_exp_config.get("rationale", "")[:100])
+        except Exception as exc:
+            logger.warning("  LLM experiment configurator unavailable: %s", exc)
+
+        # ── 1. Primary metric (LLM or fallback) ────────────────
+        primary_metric: Optional[str] = None
+        if llm_exp_config:
+            llm_metric = llm_exp_config.get("primary_metric")
+            if llm_metric and isinstance(llm_metric, str):
+                available = self.metrics_calc.list_metrics(report.task_type)
+                if llm_metric in available:
+                    primary_metric = llm_metric
+        if primary_metric is None:
+            primary_metric = report.suggested_metrics[0] if report.suggested_metrics else None
+
+        # ── 2. Holdout split (LLM or fallback) ──────────────────
+        holdout_cfg = llm_exp_config.get("holdout", {}) if llm_exp_config else {}
+        holdout_method = holdout_cfg.get("method", "chronological" if report.task_type == "timeseries" else ("stratified" if report.task_type == "classification" else "random"))
+        holdout_ratio = holdout_cfg.get("ratio", self.config.experiment.holdout_ratio)
+
+        df_holdout = None
+        _holdout_size = max(1, int(len(df) * holdout_ratio))
+        if len(df) < 20:
+            _holdout_size = 0
+
+        if _holdout_size > 0:
+            if holdout_method == "chronological" and time_col and time_col in df.columns:
+                df = df.sort_values(time_col).reset_index(drop=True)
+                df_holdout = df.iloc[-_holdout_size:].copy()
+                df = df.iloc[:-_holdout_size].copy()
+                logger.info("  Holdout: last %d rows (%.1f%%), chronological [LLM=%s]",
+                            len(df_holdout), holdout_ratio * 100, bool(llm_exp_config))
+            elif holdout_method == "stratified":
+                from sklearn.model_selection import train_test_split as tts
+                y_all = df[target_col].values
+                idx_all = np.arange(len(df))
+                train_idx, holdout_idx = tts(
+                    idx_all, test_size=holdout_ratio, stratify=y_all,
+                    random_state=42,
+                )
+                df_holdout = df.iloc[holdout_idx].copy()
+                df = df.iloc[train_idx].copy()
+                logger.info("  Holdout: %d rows (%.1f%%), stratified [LLM=%s]",
+                            len(df_holdout), holdout_ratio * 100, bool(llm_exp_config))
+            else:  # "random" or unknown
+                idx_all = np.arange(len(df))
+                rng = np.random.RandomState(42)
+                holdout_idx = rng.choice(idx_all, size=_holdout_size, replace=False)
+                df_holdout = df.iloc[holdout_idx].copy()
+                df = df.drop(df.index[holdout_idx]).copy()
+                logger.info("  Holdout: %d rows (%.1f%%), random [LLM=%s]",
+                            len(df_holdout), holdout_ratio * 100, bool(llm_exp_config))
+        logger.info("  Training/eval on %d rows after holdout", len(df))
+
+        # ── 3. Route & trial budget (LLM or fallback) ──────────
+        route_cfg = llm_exp_config.get("route", {}) if llm_exp_config else {}
+        llm_route_name = route_cfg.get("name")
+        llm_max_trials = route_cfg.get("max_trials")
+
+        if llm_route_name:
+            try:
+                route = Route(llm_route_name)
+                limits = self.router.get_resource_limits(route)
+                if llm_max_trials and isinstance(llm_max_trials, int):
+                    limits["max_trials"] = llm_max_trials
+            except ValueError:
+                route = self.router.route(n_rows=len(df), n_series=n_series_val, budget_hint=budget)
+                limits = self.router.get_resource_limits(route)
+        else:
+            route = self.router.route(n_rows=len(df), n_series=n_series_val, budget_hint=budget)
+            limits = self.router.get_resource_limits(route)
+
+        # ── 4. Tuning method (LLM or fallback) ─────────────────
+        tuning_cfg = llm_exp_config.get("tuning", {}) if llm_exp_config else {}
+        llm_tuning = tuning_cfg.get("method")
+        round1_tuning = "none"  # Round 1 never tunes
+        later_tuning = llm_tuning if llm_tuning and llm_tuning != "none" else limits.get("tuning", "none")
+
         # ═══ Phase 4: Baseline Establishment ══════════════════════
         logger.info("Phase 4: Baseline Establishment")
         result.baseline_result = self.baseline_runner.run(
-            df, target_col=target_col, time_col=time_col, id_col=id_col, task_type=report.task_type,
+            df, target_col=target_col, time_col=time_col, id_col=id_col,
+            task_type=report.task_type, metric=primary_metric or "auto",
         )
         baseline_floor = result.baseline_result.baseline_floor
-        logger.info("  Baseline floor: %.4f", baseline_floor)
+        logger.info("  Baseline floor: %.4f (%s)", baseline_floor, primary_metric)
 
         # ── Heuristic First check ───────────────────────────────
-        # Based on Google Rules of ML #1-3: don't use ML if heuristics suffice.
         if requirements and result.requirements and result.requirements.acceptable_min_performance:
             if abs(baseline_floor) <= result.requirements.acceptable_min_performance:
                 logger.info(
@@ -239,16 +346,35 @@ class EndForecast:
 
         # ═══ Phase 5: Experiment Planning & Execution ═════════════
         logger.info("Phase 5: Experiment Planning & Execution")
-        n_series = df[id_col].nunique() if (id_col and id_col in df.columns) else 1
-        route = self.router.route(n_rows=len(df), n_series=n_series, budget_hint=budget)
-        limits = self.router.get_resource_limits(route)
-        plan = self.planner.plan(report, route=route, max_trials=limits["max_trials"])
+
+        # ── LLM-driven experiment planning ────────────────────────
+        llm_plan_suggestions = None
+        try:
+            from endforecast._llm import planner_plan
+            diag = report.fingerprint.diagnostic[:4000]
+            llm_plan_suggestions = planner_plan(diag, report.task_type, len(df))
+            if llm_plan_suggestions:
+                logger.info("  LLM planner: %s models, %s feature combos",
+                            len(llm_plan_suggestions.get("models", [])),
+                            len(llm_plan_suggestions.get("features", [])))
+        except Exception as exc:
+            logger.warning("  LLM planner unavailable, using fallback: %s", exc)
+
+        plan = self.planner.plan(report, route=route, max_trials=limits["max_trials"],
+                                 llm_suggestions=llm_plan_suggestions,
+                                 primary_metric=primary_metric)
         result.plan = plan
-        logger.info("  Route: %s | Trials: %s", route.value, plan.n_trials)
+        logger.info("  Route: %s | Trials: %s | %s", route.value, plan.n_trials,
+                    "LLM-driven" if plan.llm_driven else "fallback")
 
         history: list[TrialResult] = []
         best: Optional[TrialResult] = None
         prev_best: Optional[float] = None
+
+        # ── Store best predictions & truth for refinement/ensemble ──
+        best_predictions: Optional[np.ndarray] = None
+        best_truth: Optional[np.ndarray] = None
+        best_val_indices: Optional[np.ndarray] = None  # row indices into df
 
         for round_num in range(1, self.config.experiment.max_rounds + 1):
             if opt_budget.is_exhausted:
@@ -256,29 +382,51 @@ class EndForecast:
                 break
 
             logger.info("  --- Round %s/%s ---", round_num, self.config.experiment.max_rounds)
-            round_results = self._execute_round(plan, df, target_col, time_col, round_num, preproc, limits["tuning"] if round_num > 1 else "none")
+            round_results = self._execute_round(plan, df, target_col, time_col, round_num, preproc, later_tuning if round_num > 1 else round1_tuning)
             if not round_results:
                 logger.warning("    No successful trials.")
                 continue
             opt_budget.consume(f"Round {round_num}: executed {len(round_results)} trials")
             history.extend(round_results)
-            round_best = min(round_results, key=lambda r: r.metric_value)
-            if best is None or round_best.metric_value < best.metric_value:
+            # ── Direction-aware best selection ─────────────────
+            # "minimize": lower is better (mae, mase, rmse)
+            # "maximize": higher is better (f1, accuracy, auc, r2)
+            metric_dir = self.metrics_calc._DIRECTION.get(
+                best.trial.metric if best else (primary_metric or report.suggested_metrics[0]),
+                "minimize",
+            )
+            if metric_dir == "maximize":
+                round_best = max(round_results, key=lambda r: r.metric_value)
+                if best is None:
+                    is_better = True
+                else:
+                    is_better = round_best.metric_value > best.metric_value
+            else:
+                round_best = min(round_results, key=lambda r: r.metric_value)
+                if best is None:
+                    is_better = True
+                else:
+                    is_better = round_best.metric_value < best.metric_value
+
+            if best is None or is_better:
                 best = round_best
                 opt_budget.consume(f"Round {round_num}: new best model selected ({round_best.trial.model})")
             logger.info("    Best: %s %s=%.4f±%.4f (n=%s)", best.trial.pipeline_id, best.trial.metric.upper(), best.metric_value, best.metric_std, best.metric_n_runs)
 
-            # Check baseline requirement
-            if best.metric_value >= baseline_floor and baseline_floor != float("inf"):
+            # Check baseline requirement (computed after best is updated)
+            if metric_dir == "maximize":
+                _beats = best.metric_value > baseline_floor
+            else:
+                _beats = best.metric_value < baseline_floor
+            if not _beats and baseline_floor != float("inf"):
                 logger.info("    ⚠ Warning: Best model NOT better than baseline (%.4f)", baseline_floor)
 
-            diagnosis = self.diagnostician.diagnose(round_results, baseline_metric=prev_best, previous_best=best.metric_value)
-            if diagnosis:
-                logger.info("    Diag: %s", diagnosis.summary)
-                opt_budget.consume(f"Round {round_num}: diagnosis applied ({diagnosis.adjustment[:50]})")
-
+            # ── Direction-aware convergence check ─────────────
             if prev_best is not None and best is not None and prev_best != 0:
-                improvement = abs((best.metric_value - prev_best) / prev_best)
+                if metric_dir == "maximize":
+                    improvement = (best.metric_value - prev_best) / abs(prev_best) if prev_best > 0 else 0
+                else:
+                    improvement = abs((best.metric_value - prev_best) / prev_best)
                 if improvement < self.config.experiment.convergence_threshold:
                     logger.info("    Converged (impr %.2f%% < %.1f%%)", improvement * 100, self.config.experiment.convergence_threshold * 100)
                     opt_budget.consume(f"Round {round_num}: convergence declared")
@@ -289,25 +437,55 @@ class EndForecast:
         result.best_trial = best
         logger.info("  Trials completed: %s | Best: %.4f", len(history), best.metric_value if best else float("nan"))
 
-        # ═══ Phase 6: Error Analysis + Data Snooping Tax ═══════════
+        # ─── Retrain best model on full df to get predictions for holdout ───
+        if best and best.is_successful:
+            try:
+                actual_preproc = best.trial.preprocess if best.trial.preprocess else preproc
+                best_cfg = PipelineConfig(
+                    pipeline_id="best_full", task_type=report.task_type,
+                    preprocess=actual_preproc, features=best.trial.features,
+                    model={"type": best.trial.model, "params": best.trial.model_params},
+                    cv_strategy=best.trial.cv_strategy,
+                )
+                best_pipe = Pipeline(best_cfg)
+                best_pipe.fit(df, target_col=target_col, time_col=time_col)
+                best_predictions = best_pipe.predict(df, target_col=target_col, time_col=time_col).predictions
+                if df_holdout is not None:
+                    holdout_preds = best_pipe.predict(df_holdout, target_col=target_col, time_col=time_col).predictions
+                    best_truth = df_holdout[target_col].values
+                    if len(holdout_preds) < len(best_truth):
+                        best_truth = best_truth[-len(holdout_preds):]
+                    best_predictions = holdout_preds
+                logger.debug("  Best model retrained on full data, saved predictions for refinement")
+            except Exception as exc:
+                logger.warning("  Best model retrain for refinement failed: %s", exc)
+
+        # ═══ Phase 6: Evaluation & Error Analysis ═══════════════
         logger.info("Phase 6: Evaluation & Error Analysis")
 
-        # Populate metric tiers
+        # ── Holdout evaluation (single unbiased assessment) ─────
+        holdout_score = float("nan")
+        if best_predictions is not None and best_truth is not None and df_holdout is not None:
+            try:
+                ho_mr = self.metrics_calc.evaluate(
+                    best_truth, best_predictions,
+                    task_type=report.task_type,
+                    metrics=[best.trial.metric],
+                )
+                holdout_score = ho_mr.value
+                logger.info("  Holdout score: %.4f (unbiased estimate on %d held-out rows)",
+                            holdout_score, len(df_holdout))
+            except Exception as exc:
+                logger.warning("  Holdout evaluation failed: %s", exc)
+
         result.metric_tiers = {
             "training_score": float("nan"),
             "validation_score": best.metric_value if best else float("nan"),
-            "holdout_score": float("nan"),
+            "holdout_score": holdout_score,
             "optimization_rounds": len(history),
+            # No warning needed: holdout provides the unbiased estimate
             "data_snooping_warning": False,
         }
-        # Warn if many rounds of optimization on same validation data
-        if len(history) > 5 and best and best.is_successful:
-            result.metric_tiers["data_snooping_warning"] = True
-            logger.info(
-                "  ⚠ Data snooping warning: %s rounds of optimization on validation data. "
-                "Validation score may be optimistic. Consider nested CV or hold-out.",
-                len(history),
-            )
 
         if best and best.is_successful and best.evaluation_df is not None:
             y_true = best.evaluation_df[target_col].values
@@ -318,26 +496,106 @@ class EndForecast:
 
         # ═══ Phase 7: Refinement ═════════════════════════════════
         refinement_params = {}
-        if best and best.is_successful:
+        if best_predictions is not None and best_truth is not None and best and best.is_successful:
             logger.info("Phase 7: Iterative Refinement")
             try:
-                # Method chosen by LLM if available, otherwise safe default.
+                # ── LLM-driven refinement decision ────────────────
                 ref_method = "statistical"
+                ref_params: dict[str, Any] = {}
+                try:
+                    from endforecast._llm import refiner_decide
+                    # Provide residual statistics so LLM can decide
+                    residuals = best_truth - best_predictions
+                    error_brief = json.dumps({
+                        "task_type": report.task_type,
+                        "best_metric": best.metric_value,
+                        "best_metric_name": best.trial.metric,
+                        "baseline": baseline_floor,
+                        "residual_mean": round(float(np.mean(residuals)), 4),
+                        "residual_std": round(float(np.std(residuals)), 4),
+                        "residual_p5": round(float(np.percentile(residuals, 5)), 4),
+                        "residual_p95": round(float(np.percentile(residuals, 95)), 4),
+                        "metric_std": best.metric_std,
+                    }, ensure_ascii=False)
+                    llm_ref = refiner_decide(error_brief, report.task_type)
+                    if llm_ref and llm_ref.get("apply"):
+                        ref_method = llm_ref.get("method", "statistical")
+                        ref_params = llm_ref.get("params", {})
+                        logger.info("  LLM refiner: %s (rationale: %s)", ref_method,
+                                    llm_ref.get("rationale", "")[:60])
+                except Exception as exc:
+                    logger.debug("  LLM refiner unavailable, using default: %s", exc)
+
+                # ── Apply refinement to actual predictions ────────
                 ref_result = self.refiner.refine(
-                    np.array([best.metric_value]), report.task_type, method=ref_method,
+                    best_predictions, report.task_type, method=ref_method,
+                    reference=best_truth, **ref_params,
                 )
                 logger.info("  Method: %s | Improvement: %.1f%%", ref_result.method, ref_result.improvement_pct)
                 refinement_params = ref_result.details
+
+                # ── Recompute metric on refined predictions ───────
+                try:
+                    ref_mr = self.metrics_calc.evaluate(
+                        best_truth, ref_result.refined_predictions,
+                        task_type=report.task_type, metrics=[best.trial.metric],
+                    )
+                    result.metric_tiers["refinement_score"] = ref_mr.value
+                    logger.info("  Refined score: %.4f (was %.4f)", ref_mr.value, holdout_score if not np.isnan(holdout_score) else best.metric_value)
+                except Exception:
+                    pass
             except Exception as exc:
                 logger.warning("  Skipped: %s", exc)
+
+        # ── LLM-driven ensemble decision ─────────────────────────
+        if len(history) >= 4 and best and best.is_successful:
+            logger.info("  Ensemble Analysis")
+            try:
+                from endforecast._llm import ensemble_decide
+                trial_summary = json.dumps([
+                    {"id": r.trial.id, "model": r.trial.model, "value": r.metric_value,
+                     "std": r.metric_std, "features": r.trial.features}
+                    for r in sorted(history, key=lambda x: x.metric_value)[:8]
+                ], ensure_ascii=False)
+                ensemble_plan = ensemble_decide(trial_summary)
+                if ensemble_plan and ensemble_plan.get("mix"):
+                    logger.info("  Ensemble: %s → %s (rationale: %s)",
+                                ensemble_plan.get("method", "?"),
+                                ensemble_plan.get("candidate_models", []),
+                                ensemble_plan.get("rationale", "")[:60])
+                    result.metric_tiers["ensemble_strategy"] = ensemble_plan
+
+                    # ── Execute ensemble: train top-k models, combine predictions ──
+                    candidate_ids = ensemble_plan.get("candidate_models", [])
+                    if candidate_ids and best_predictions is not None and best_truth is not None:
+                        try:
+                            ensemble_preds = self._execute_ensemble(
+                                history, candidate_ids, df, df_holdout,
+                                target_col, time_col, preproc,
+                                ensemble_plan.get("method", "median_ensemble"),
+                            )
+                            if ensemble_preds is not None:
+                                ens_mr = self.metrics_calc.evaluate(
+                                    best_truth, ensemble_preds,
+                                    task_type=report.task_type, metrics=[best.trial.metric],
+                                )
+                                result.metric_tiers["ensemble_score"] = ens_mr.value
+                                logger.info("  Ensemble score: %.4f (best single: %.4f)",
+                                            ens_mr.value,
+                                            holdout_score if not np.isnan(holdout_score) else best.metric_value)
+                        except Exception as exc:
+                            logger.warning("  Ensemble execution failed: %s", exc)
+            except Exception as exc:
+                logger.debug("  Ensemble decision skipped: %s", exc)
 
         # ═══ Phase 8: Interpretation ═════════════════════════════
         logger.info("Phase 8: Interpretation & Explainability")
         if best and best.is_successful:
             try:
-                # Build a quick pipeline to get fitted model + features
+                actual_preproc = best.trial.preprocess if best.trial.preprocess else preproc
                 cfg_temp = PipelineConfig(
                     pipeline_id="temp_explain", task_type=report.task_type,
+                    preprocess=actual_preproc,
                     model={"type": best.trial.model, "params": best.trial.model_params},
                     features=best.trial.features,
                 )
@@ -353,15 +611,15 @@ class EndForecast:
         # ═══ Phase 9: Pipeline Export + Model Lineage ════════════
         logger.info("Phase 9: Pipeline Construction & Model Lineage")
         if best and best.is_successful:
-            # ── Compute training data fingerprint for lineage ──
             import hashlib
             data_hash = hashlib.sha256(
                 pd.util.hash_pandas_object(df).values.tobytes()
             ).hexdigest()[:16]
 
+            actual_preproc = best.trial.preprocess if best.trial.preprocess else preproc
             cfg = PipelineConfig(
                 pipeline_id=f"endforecast_{report.task_type}_v1",
-                task_type=report.task_type, preprocess=preproc,
+                task_type=report.task_type, preprocess=actual_preproc,
                 features=best.trial.features,
                 model={"type": best.trial.model, "params": best.trial.model_params},
                 cv_strategy=best.trial.cv_strategy,
@@ -373,7 +631,6 @@ class EndForecast:
                 pipe.fit(df, target_col=target_col, time_col=time_col)
                 result.pipeline = pipe
 
-                # ── Model Lineage ─────────────────────────────
                 result.metric_tiers["training_data_hash"] = data_hash
                 result.metric_tiers["pipeline_id"] = cfg.pipeline_id
                 result.metric_tiers["model_family"] = best.trial.model
@@ -384,9 +641,6 @@ class EndForecast:
                     if time_col and time_col in df.columns else "N/A"
                 )
 
-                # ── Feature Store dependency list ─────────────
-                # List all features the model depends on, so ops teams
-                # know exactly what data must be available at serving time.
                 raw_features = [c for c in df.columns if c not in {target_col, time_col, id_col, "date_time", "unique_id"} and not c.startswith("_")]
                 engineered_features = [f for f in best.trial.features if f not in raw_features]
                 result.metric_tiers["feature_dependencies"] = {
@@ -399,7 +653,6 @@ class EndForecast:
                 logger.info("  Lineage: hash=%s | %s rows | %s features",
                             data_hash, len(df), len(raw_features) + len(engineered_features))
 
-                # ── P0: Model Card Generation ──────────────────
                 try:
                     from endforecast.engine.model_card import ModelCardGenerator
                     generator = ModelCardGenerator()
@@ -446,11 +699,14 @@ class EndForecast:
 
     @staticmethod
     def _plan_preprocessing(report: ExplorationReport) -> list[str]:
+        """Task-agnostic baseline preprocessing.
+
+        Only handles missing data. Model-specific preprocessing
+        (scaling, etc.) is decided per-trial by the LLM planner.
+        """
         steps: list[str] = []
         if report.missing_ratio > 0.05:
             steps.append("simple_impute")
-        if report.task_type == "timeseries":
-            steps.append("standard_scaler")
         return steps
 
     def _execute_round(self, plan, df, target_col, time_col, round_num, preproc, hpo_method):
@@ -458,22 +714,31 @@ class EndForecast:
         for trial in plan.trials:
             trial.round = round_num
             try:
-                res = self._run_single_trial(trial, df, target_col, time_col, preproc, hpo_method)
+                res = self._run_single_trial(trial, df, target_col, time_col, preproc, hpo_method, round_num)
                 results.append(res)
             except Exception as exc:
                 results.append(TrialResult(trial=trial, state=TrialState.FAILED, error_message=str(exc)))
         return results
 
-    def _run_single_trial(self, trial, df, target_col, time_col, preproc, hpo_method):
+    def _run_single_trial(self, trial, df, target_col, time_col, preproc, hpo_method, round_num=1):
         started = datetime.now()
+        # ── Use trial-level preprocessing (LLM-decided per model),
+        # ── falling back to global only if trial has none set ───
+        actual_preproc = trial.preprocess if trial.preprocess else preproc
+        logger.info("  trial %s: model=%s, features=%s, preproc=%s",
+                     trial.id, trial.model, trial.features, actual_preproc)
         cfg = PipelineConfig(
             pipeline_id=trial.pipeline_id, task_type=trial.task_type,
-            preprocess=preproc, features=trial.features,
+            preprocess=actual_preproc, features=trial.features,
             model={"type": trial.model, "params": trial.model_params},
             cv_strategy=trial.cv_strategy, refinement={"type": trial.refinement},
         )
         pipe = Pipeline(cfg)
-        split_cfg = SplitConfig(method="train_test", test_size=0.2)
+        # ── Vary random_state by round: each round tests on a different
+        #     validation split; within the same round all trials share
+        #     the same split for fair comparison.
+        split_cfg = SplitConfig(method="train_test", test_size=0.2,
+                                random_state=42 + round_num * 100)
         split_result = self.splitter.split(df, target_col=target_col, time_col=time_col, task_type=trial.task_type, config=split_cfg)
         if not split_result.folds:
             raise RuntimeError("No splits generated.")
@@ -488,20 +753,28 @@ class EndForecast:
                 c2 = PipelineConfig(pipeline_id=trial.pipeline_id, task_type=trial.task_type, model={"type": trial.model, "params": params})
                 p2 = Pipeline(c2)
                 p2.fit(train_df, target_col=target_col, time_col=time_col)
-                r = p2.predict(val_df, time_col=time_col)
+                r = p2.predict(val_df, target_col=target_col, time_col=time_col)
                 return r.metrics.get(trial.metric, float("inf"))
 
             hpo_res = self.hyperopt.optimize(_obj, ps, hpo_cfg)
             trial.model_params = hpo_res.best_params
 
         pipe.fit(train_df, target_col=target_col, time_col=time_col)
-        pred_result = pipe.predict(val_df, time_col=time_col)
+        pred_result = pipe.predict(val_df, target_col=target_col, time_col=time_col)
         y_val = val_df[target_col].values
-        mr = self.metrics_calc.evaluate(y_val, pred_result.predictions, task_type=trial.task_type, metrics=[trial.metric])
+        y_pred = pred_result.predictions
+
+        # ── Align predictions & truth (lag features cause dropna → shorter preds) ──
+        if len(y_pred) < len(y_val):
+            logger.debug("  Aligning: preds=%s vs truth=%s (lag features dropped leading rows)",
+                         len(y_pred), len(y_val))
+            y_val = y_val[-len(y_pred):]
+
+        mr = self.metrics_calc.evaluate(y_val, y_pred, task_type=trial.task_type, metrics=[trial.metric])
 
         # ── Stability assessment (multi-seed) ──────────────────
         stability_scores = [mr.value]
-        for seed_offset in range(1, 3):  # Run 2 additional seeds
+        for seed_offset in range(1, 3):
             try:
                 scfg = SplitConfig(method="train_test", test_size=0.2,
                                    random_state=42 + seed_offset * 100)
@@ -514,14 +787,17 @@ class EndForecast:
                 vdf2 = df.iloc[f2["val_idx"]]
                 p2 = Pipeline(PipelineConfig(
                     pipeline_id=f"{trial.pipeline_id}_seed{seed_offset}",
-                    task_type=trial.task_type, preprocess=preproc,
+                    task_type=trial.task_type, preprocess=actual_preproc,
                     features=trial.features,
                     model={"type": trial.model, "params": trial.model_params},
                 ))
                 p2.fit(tdf2, target_col=target_col, time_col=time_col)
-                pr2 = p2.predict(vdf2, time_col=time_col)
+                pr2 = p2.predict(vdf2, target_col=target_col, time_col=time_col)
                 yv2 = vdf2[target_col].values
-                mr2 = self.metrics_calc.evaluate(yv2, pr2.predictions,
+                yp2 = pr2.predictions
+                if len(yp2) < len(yv2):
+                    yv2 = yv2[-len(yp2):]
+                mr2 = self.metrics_calc.evaluate(yv2, yp2,
                                                  task_type=trial.task_type,
                                                  metrics=[trial.metric])
                 stability_scores.append(mr2.value)
@@ -540,6 +816,68 @@ class EndForecast:
             duration_seconds=(datetime.now() - started).total_seconds(),
         )
 
+    def _execute_ensemble(
+        self,
+        history: list[TrialResult],
+        candidate_ids: list[str],
+        df_train: pd.DataFrame,
+        df_holdout: Optional[pd.DataFrame],
+        target_col: str,
+        time_col: Optional[str],
+        preproc: list[str],
+        method: str,
+    ) -> Optional[np.ndarray]:
+        """Train top-k models and combine their predictions on holdout data.
+
+        Task-agnostic: works for classification, regression, time series.
+        """
+        if df_holdout is None or len(df_holdout) == 0:
+            return None
+
+        # Find candidate trials by id
+        candidates = [r for r in history if r.trial.id in candidate_ids and r.is_successful]
+        if len(candidates) < 2:
+            logger.info("  Ensemble: need ≥2 candidates, found %d", len(candidates))
+            return None
+
+        all_preds: list[np.ndarray] = []
+        for cand in candidates[:5]:  # Cap at 5 models
+            try:
+                actual_preproc = cand.trial.preprocess if cand.trial.preprocess else preproc
+                cfg = PipelineConfig(
+                    pipeline_id=f"ensemble_{cand.trial.id}",
+                    task_type=cand.trial.task_type,
+                    preprocess=actual_preproc,
+                    features=cand.trial.features,
+                    model={"type": cand.trial.model, "params": cand.trial.model_params},
+                )
+                pipe = Pipeline(cfg)
+                pipe.fit(df_train, target_col=target_col, time_col=time_col)
+                pr = pipe.predict(df_holdout, target_col=target_col, time_col=time_col)
+                preds = pr.predictions
+                all_preds.append(preds)
+                logger.debug("  Ensemble candidate %s (%s) len=%d trained", cand.trial.id, cand.trial.model, len(preds))
+            except Exception as exc:
+                logger.debug("  Ensemble candidate %s failed: %s", cand.trial.id, exc)
+
+        if len(all_preds) < 2:
+            return None
+
+        # ── Align: truncate all to shortest (lag features drop leading rows) ──
+        min_len = min(len(p) for p in all_preds)
+        aligned = [p[-min_len:] for p in all_preds]
+        stack = np.column_stack(aligned)
+
+        if method == "median_ensemble":
+            return np.nanmedian(stack, axis=1)
+        elif method == "mean_ensemble":
+            return np.nanmean(stack, axis=1)
+        elif method == "voting" and all_preds[0].dtype in (np.dtype(int), np.dtype(bool)):
+            return (np.nanmean(stack, axis=1) >= 0.5).astype(float)
+        else:
+            # Default: median (robust to outliers)
+            return np.nanmedian(stack, axis=1)
+
 
 def _hpo_space(model: str) -> dict:
     return {
@@ -547,4 +885,5 @@ def _hpo_space(model: str) -> dict:
         "xgboost": {"n_estimators": [100, 200, 500], "max_depth": [3, 5, 7], "learning_rate": [0.01, 0.05, 0.1]},
         "random_forest": {"n_estimators": [100, 200, 500], "max_depth": [5, 10, 15]},
         "ridge": {"alpha": [0.01, 0.1, 1.0, 10.0]},
+        "logistic": {"C": [0.01, 0.1, 1.0, 10.0]},
     }.get(model, {"n_estimators": [100, 200, 500]})

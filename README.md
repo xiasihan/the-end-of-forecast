@@ -90,9 +90,9 @@ EndForecast runs a rigorous 10-phase pipeline. Every phase produces auditable, i
 
 **Phase 4 — Establish baselines.** Mandatory baselines (naive, seasonal, linear) set a performance floor. If a baseline already meets the user's target: heuristic-first warning.
 
-**Phase 5 — Experiment systematically.** LLM-driven experiment planning: the Planner agent reads the fingerprint diagnostic and selects models, features, and preprocessing per dataset (no hardcoded model lists). Falls back to sensible defaults when no LLM is configured. Multi-round, cross-family trials with HPO (Round 2+), stability assessment across random seeds, and optimization-budget tracking.
+**Phase 5 — Experiment systematically.** Before experiments begin, a single LLM call (the *Experiment Configurator*) decides all experimental parameters: holdout method & ratio, cross-validation strategy, execution route, trial budget, hyperparameter tuning method, and primary metric — replacing ~8 hardcoded if-else branches. Once configured, the Planner agent reads the fingerprint diagnostic and selects models, features, and preprocessing per dataset (no hardcoded model lists). Feature engineering is driven by a naming-convention parser: the LLM names any feature (`lag_24`, `diff_lag_1`, `rolling_mean_7`, `ema_12`, `hour`, `is_weekend`, ...) and the engine computes it. Falls back to sensible defaults when no LLM is configured. Multi-round, cross-family trials with HPO (Round 2+), stability assessment across random seeds, and optimization-budget tracking. Best model selection is direction-aware (maximizes F1/AUC, minimizes MAE/MASE).
 
-**Phase 6 — Evaluate with rigor.** Multi-metric evaluation, paired t-tests with Bonferroni correction, effect sizes (Cohen's d), calibration assessment (ECE / Brier score), and data-snooping tax annotation.
+**Phase 6 — Evaluate with rigor.** Multi-metric evaluation, paired t-tests with Bonferroni correction, effect sizes (Cohen's d), calibration assessment (ECE / Brier score). Holdout evaluation: a completely untouched data slice (chronological for time series, stratified for classification, random for regression) provides the single unbiased performance estimate. No data snooping: experimentation never sees the holdout.
 
 **Phase 7 — Refine.** LLM-driven refinement: the Refiner agent selects the appropriate post-processing method (residual correction, threshold optimization, or statistical clipping) based on error analysis. Falls back to statistical refinement when no LLM is configured. Optional judgmental overrides with full audit trail. Supports ensemble strategies (median, inverse-MASE weighted, stacking) for multi-model combination in later rounds.
 
@@ -111,13 +111,14 @@ endforecast/
 ├── orchestrator.py            # 10-phase pipeline executor
 ├── config.py / cli.py / api.py   # Config, CLI, REST API
 │
-├── agents/                    # Intelligence layer
+├── agents/                    # LLM decision layer (all have deterministic fallbacks)
 │   ├── requirements.py        # Phase 0: goal definition, risk detection
-│   ├── explorer.py            # Phase 1: task detection, profiling, noise/hierarchy checks
-│   ├── planner.py             # Phase 5: LLM-driven experiment design (w/fallback)
-│   ├── diagnostician.py       # Phase 7: LLM-driven failure diagnosis (w/fallback)
+│   ├── explorer.py            # Phase 1: task detection, profiling, noise/hierarchy
+│   ├── planner.py             # Phase 5: LLM-driven model/feature/preprocessing design
+│   ├── diagnostician.py       # Phase 5: LLM-driven failure analysis per round
 │   ├── refiner.py             # Phase 7: statistical + judgmental refinement
-│   └── prompts.py             # LLM system prompts (task-agnostic)
+│   └── prompts.py             # 8 LLM system prompts (Configurator, Planner, Diagnostician,
+│                              #   Refiner, Ensemble, ModelSelector, Explorer, Evaluator)
 │
 ├── engine/                    # Core computation
 │   ├── pipeline.py            # Unified prediction pipeline
@@ -146,7 +147,7 @@ endforecast/
     └── tool_generator.py      # pip-installable CLI tool
 ```
 
-**34 modules. One entry point. Zero manual steps.**
+**36 modules. One entry point. Zero manual steps.**
 
 ---
 

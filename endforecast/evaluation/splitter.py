@@ -99,9 +99,9 @@ class DataSplitter:
     def _auto_config(task_type: str) -> SplitConfig:
         if task_type == "timeseries":
             return SplitConfig(method="time_series", n_splits=5, test_size=0.15, shuffle=False)
-        elif task_type == "classification":
-            return SplitConfig(method="stratified_kfold", n_splits=5, test_size=0.2, shuffle=True)
-        return SplitConfig(method="kfold", n_splits=5, test_size=0.2, shuffle=True)
+        # For classification and regression: do NOT shuffle if time column exists.
+        # Lag features break when the temporal order is randomized.
+        return SplitConfig(method="kfold", n_splits=5, test_size=0.2, shuffle=False)
 
 
 # ════════════════════════════════════════════════════════════════════
