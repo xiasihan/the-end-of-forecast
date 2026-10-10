@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Plus, FileText, Trash2, Search } from 'lucide-react';
+import { Plus, Search, Trash2, Circle, Sparkles } from 'lucide-react';
 import { useStore } from '../store';
 import type { Project } from '../types';
 import NewProjectDialog from './NewProjectDialog';
@@ -42,60 +42,69 @@ export default function Sidebar() {
     if (selectedProjectId === id) navigate('/');
   };
 
-  const statusColor = (status: string) => {
+  const statusData = (status: string) => {
     switch (status) {
-      case 'running': return 'text-yellow';
-      case 'completed': return 'text-green';
-      case 'failed': return 'text-red';
-      default: return 'text-dim';
+      case 'running': return { color: 'bg-amber', text: 'text-amber' };
+      case 'completed': return { color: 'bg-green', text: 'text-green' };
+      case 'failed': return { color: 'bg-red', text: 'text-red' };
+      default: return { color: 'bg-gray-300', text: 'text-dim' };
     }
   };
 
   return (
     <>
-      <aside className="w-60 bg-surface border-r border-border flex flex-col shrink-0 overflow-hidden">
-        <div className="p-3 border-b border-border">
+      <aside className="w-60 bg-white border-r border-border/60 flex flex-col shrink-0 overflow-hidden">
+        <div className="p-4 border-b border-border/40">
           <button
             onClick={() => setShowNew(true)}
-            className="w-full flex items-center gap-2 px-3 py-2 bg-blue/10 border border-blue/20 rounded-md text-blue text-sm font-medium hover:bg-blue/20 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-white rounded-xl text-sm font-semibold shadow-sm shadow-accent/20 hover:shadow-md hover:shadow-accent/30 transition-all active:scale-[0.98]"
           >
-            <Plus size={16} />
+            <Plus size={18} />
             {t('sidebar.newProject')}
           </button>
-          <div className="relative mt-2">
-            <Search size={14} className="absolute left-2.5 top-2 text-dim" />
+          <div className="relative mt-3">
+            <Search size={14} className="absolute left-3 top-2.5 text-dim" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('sidebar.filter')}
-              className="w-full bg-bg border border-border rounded-md pl-8 pr-2 py-1.5 text-xs text-text placeholder-dim focus:outline-none focus:border-blue/50"
+              className="input-field pl-9 text-xs"
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto">
-          {filtered.map((p: Project) => (
-            <div
-              key={p.id}
-              onClick={() => handleSelect(p)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-l-2 hover:bg-white/[0.03] transition-colors group ${
-                selectedProjectId === p.id ? 'border-blue bg-blue/[0.04]' : 'border-transparent'
-              }`}
-            >
-              <FileText size={14} className={statusColor(p.status)} />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-text truncate">{p.name}</div>
-                <div className="text-[10px] text-dim">
-                  {p.task_type || 'idle'} · {p.n_rows ? `${p.n_rows} rows` : ''}
-                </div>
-              </div>
-              <button
-                onClick={(e) => handleDelete(e, p.id)}
-                className="opacity-0 group-hover:opacity-100 text-dim hover:text-red transition-all"
-              >
-                <Trash2 size={12} />
-              </button>
+
+        <div className="flex-1 overflow-y-auto px-2 py-1">
+          {filtered.length === 0 && !search && (
+            <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+              <Sparkles size={24} className="text-dim/40 mb-3" />
+              <p className="text-xs text-dim">{t('sidebar.noProjects')}</p>
             </div>
-          ))}
+          )}
+          {filtered.map((p: Project) => {
+            const s = statusData(p.status);
+            return (
+              <div
+                key={p.id}
+                onClick={() => handleSelect(p)}
+                className={`flex items-center gap-3 px-3 py-2.5 mb-0.5 rounded-xl cursor-pointer transition-all group text-sm
+                  ${selectedProjectId === p.id ? 'bg-accent-light text-accent font-medium' : 'text-textSecondary hover:bg-gray-100'}`}
+              >
+                <Circle size={8} className={`shrink-0 ${s.color}`} fill="currentColor" />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-medium">{p.name}</div>
+                  <div className="text-[10px] text-dim mt-0.5">
+                    {p.task_type || '—'} {p.n_rows ? `· ${p.n_rows} rows` : ''}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => handleDelete(e, p.id)}
+                  className="opacity-0 group-hover:opacity-100 text-dim hover:text-red transition-all p-0.5"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </aside>
       {showNew && (

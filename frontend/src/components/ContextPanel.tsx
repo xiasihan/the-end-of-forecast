@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Play, Circle } from 'lucide-react';
+import { Play, Circle, Loader, Sparkles } from 'lucide-react';
 import { useStore } from '../store';
 import { useState } from 'react';
 
@@ -29,44 +29,65 @@ export default function ContextPanel() {
   };
 
   return (
-    <aside className="w-80 bg-surface border-l border-border flex flex-col shrink-0 overflow-hidden">
-      <div className="p-3 border-b border-border">
+    <aside className="w-80 bg-white border-l border-border/60 flex flex-col shrink-0 overflow-hidden">
+      {/* Run Button */}
+      <div className="p-4 border-b border-border/40">
         <button onClick={startPipeline} disabled={!id||running}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green/20 border border-green/30 rounded-lg text-green font-medium text-sm hover:bg-green/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          <Play size={16} className={running?'animate-pulse':''} />
+          className="w-full flex items-center justify-center gap-2.5 px-5 py-3 bg-accent text-white rounded-2xl font-bold text-sm
+                     shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5
+                     transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+          {running ? <Loader size={18} className="animate-spin" /> : <Play size={18} className="fill-white" />}
           {running ? t('context.running') : t('context.runPipeline')}
         </button>
       </div>
-      <div className="p-3 border-b border-border">
-        <div className="text-[10px] text-dim uppercase tracking-wide mb-2">{t('context.phaseProgress')}</div>
+
+      {/* Phase Tracker */}
+      <div className="px-4 py-3 border-b border-border/40">
+        <div className="metric-label mb-3">{t('context.phaseProgress')}</div>
         <div className="space-y-0.5">
-          {phases.map((p) => (
-            <div key={p.phase} className="flex items-center gap-2 text-xs py-0.5">
-              <Circle size={8} className={`shrink-0 ${p.status==='completed'?'fill-green text-green':p.status==='running'?'fill-yellow text-yellow animate-pulse':p.status==='failed'?'fill-red text-red':'text-dim/30'}`} />
-              <span className={`font-mono text-dim ${p.status!=='pending'?'text-text/80':''}`}>P{p.phase}</span>
-              <span className={`truncate ${p.status!=='pending'?'text-text/70':'text-dim/50'}`}>{t(`phaseNames.${p.phase}`)}</span>
-              {p.elapsedMs&&<span className="text-dim/50 font-mono ml-auto text-[10px]">{(p.elapsedMs/1000).toFixed(1)}s</span>}
+          {phases.map((p) => {
+            const done = p.status === 'completed';
+            const active = p.status === 'running';
+            const failed = p.status === 'failed';
+            return (
+              <div key={p.phase} className={`flex items-center gap-2.5 text-xs py-1.5 px-2 rounded-lg transition-colors ${active ? 'bg-amber-bg' : done ? 'text-textSecondary' : 'text-dim/50'}`}>
+                <Circle size={6} className={`shrink-0 ${done||active?'fill-current text-accent':failed?'fill-current text-red':'text-dim/30'}`} />
+                <span className={`font-mono font-semibold ${done?'text-accent':active?'text-amber':''}`}>P{p.phase}</span>
+                <span className={`truncate font-medium ${active?'text-amber':''}`}>{t(`phaseNames.${p.phase}`)}</span>
+                {p.elapsedMs && <span className="text-dim font-mono ml-auto text-[10px]">{(p.elapsedMs/1000).toFixed(1)}s</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Live Metrics */}
+      <div className="px-4 py-3 border-b border-border/40">
+        <div className="metric-label mb-3">{t('context.liveMetrics')}</div>
+        <div className="space-y-2.5">
+          <TR label={t('context.validation')} value={validationScore} color="text-blue" />
+          <TR label={t('context.holdout')} value={holdoutScore} color="text-green" />
+          <TR label={t('context.bestModel')} value={bestModel} color="text-purple" />
+        </div>
+      </div>
+
+      {/* LLM Decisions */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="metric-label mb-3">{t('context.llmDecisions')}</div>
+        <div className="space-y-2">
+          {llmLog.length===0 && (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Sparkles size={20} className="text-dim/30 mb-3" />
+              <p className="text-xs text-dim/60 italic">{t('context.noDecisions')}</p>
             </div>
-          ))}
-        </div>
-      </div>
-      <div className="p-3 border-b border-border">
-        <div className="text-[10px] text-dim uppercase tracking-wide mb-2">{t('context.liveMetrics')}</div>
-        <div className="space-y-2">
-          <TR label={t('context.validation')} value={validationScore} />
-          <TR label={t('context.holdout')} value={holdoutScore} />
-          <TR label={t('context.bestModel')} value={bestModel} />
-        </div>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3">
-        <div className="text-[10px] text-dim uppercase tracking-wide mb-2">{t('context.llmDecisions')}</div>
-        <div className="space-y-2">
-          {llmLog.length===0&&<div className="text-xs text-dim/50 italic">{t('context.noDecisions')}</div>}
+          )}
           {llmLog.map((e,i)=>(
-            <div key={i} className="bg-bg border border-border rounded-md p-2">
-              <div className="text-[10px] text-yellow font-medium mb-0.5">{e.agent}</div>
-              <div className="text-xs text-text/70">{e.summary}</div>
-              {e.rationale&&<div className="text-[11px] text-dim/60 italic mt-1 leading-relaxed">{e.rationale.slice(0,120)}</div>}
+            <div key={i} className="bg-gray-50 border border-border/30 rounded-xl p-3 hover:border-accent/20 transition-all">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="badge badge-purple text-[10px]">{e.agent}</span>
+              </div>
+              <div className="text-xs text-text font-medium mb-1">{e.summary}</div>
+              {e.rationale && <div className="text-[11px] text-textSecondary/80 leading-relaxed">{e.rationale.slice(0,150)}</div>}
             </div>
           ))}
         </div>
@@ -75,6 +96,13 @@ export default function ContextPanel() {
   );
 }
 
-function TR({ label, value }: { label: string; value: string|number|null }) {
-  return <div className="flex justify-between items-center"><span className="text-xs text-dim">{label}</span><span className="text-xs font-mono text-text">{typeof value==='number'?value.toFixed(4):value||'—'}</span></div>;
+function TR({ label, value, color }: { label: string; value: string|number|null; color: string }) {
+  return (
+    <div className="flex justify-between items-center py-1">
+      <span className="text-xs text-textSecondary font-medium">{label}</span>
+      <span className={`text-xs font-mono font-bold ${color}`}>
+        {typeof value==='number'?value.toFixed(4):value||'—'}
+      </span>
+    </div>
+  );
 }

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from '../store';
 import PhaseCard from './PhaseCard';
 import DashboardView from './DashboardView';
+import { Loader } from 'lucide-react';
 
 export default function TerminalArea() {
   const { id } = useParams<{ id: string }>();
@@ -17,29 +18,46 @@ export default function TerminalArea() {
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-3">
       {errors.length > 0 && (
-        <div className="bg-red/10 border border-red/20 rounded-lg p-4 mb-4">
-          <div className="text-red font-medium text-sm mb-1">{t('terminal.pipelineError')}</div>
+        <div className="bg-red-bg border border-red/20 rounded-2xl p-5 mb-2 animate-fade-in">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-red" />
+            <div className="text-red font-semibold text-sm">{t('terminal.pipelineError')}</div>
+          </div>
           {errors.map((e, i) => (
-            <div key={i} className="text-red/80 text-xs font-mono whitespace-pre-wrap">{e}</div>
+            <div key={i} className="text-red/80 text-xs font-mono bg-white/50 rounded-lg p-3 mt-1.5 whitespace-pre-wrap">{e}</div>
           ))}
         </div>
       )}
+
       {isRunning && (
-        <div className="flex items-center gap-2 text-yellow text-xs mb-3 animate-pulse">
-          <div className="w-2 h-2 rounded-full bg-yellow" />
-          {t('terminal.running')} — {runningPhase ? `${t(`phaseNames.${runningPhase.phase}`)}` : t('terminal.initializing')}
+        <div className="flex items-center gap-3 px-4 py-3 bg-amber-bg border border-amber/20 rounded-2xl animate-fade-in">
+          <Loader size={16} className="text-amber animate-spin" />
+          <span className="text-amber font-semibold text-sm">
+            {t('terminal.running')}
+          </span>
+          {runningPhase && (
+            <span className="text-amber/70 text-sm font-medium">
+              — {t(`phaseNames.${runningPhase.phase}`)}
+            </span>
+          )}
         </div>
       )}
-      {phases.filter((p) => p.status !== 'pending').map((phase) => (
-        <PhaseCard key={phase.phase} phase={phase} />
+
+      {phases.filter((p) => p.status !== 'pending').map((phase, idx) => (
+        <div key={phase.phase} className="animate-fade-in" style={{ animationDelay: `${idx * 60}ms` }}>
+          <PhaseCard phase={phase} />
+        </div>
       ))}
+
       {phases.every((p) => p.status === 'pending') && (
-        <div className="flex items-center justify-center h-64 text-dim text-sm">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-3xl mb-3">🚀</div>
-            <p>{t('terminal.empty')}</p>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-light mb-4">
+              <Loader size={28} className="text-accent/40" />
+            </div>
+            <p className="text-textSecondary text-sm font-medium">{t('terminal.empty')}</p>
           </div>
         </div>
       )}
