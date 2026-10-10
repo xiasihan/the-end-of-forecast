@@ -42,6 +42,8 @@ npm run dev
 
 The platform uses a three-column layout inspired by professional developer tools:
 
+![Welcome Page](images/screenshots/welcome_en.png)
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │  🔮 EndForecast                     [🌐 EN/中文]  [API Docs]    │  ← Header (48px)
