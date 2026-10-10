@@ -10,7 +10,8 @@
   <a href="#工作流程">工作流程</a> ·
   <a href="#架构">架构</a> ·
   <a href="#核心能力">核心能力</a> ·
-  <a href="METHODOLOGY.md">方法论</a>
+  <a href="METHODOLOGY.md">方法论</a> ·
+  <a href="docs/FRONTEND_CN.md">Web 控制台</a>
 </p>
 
 ---

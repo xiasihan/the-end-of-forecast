@@ -34,7 +34,12 @@ Thumbs.db
 # EndForecast artifacts
 endforecast_artifacts/
 endforecast_export/
+endforecast_sessions/
 tests/output/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
 
 # Pip
 pip-wheel-metadata/

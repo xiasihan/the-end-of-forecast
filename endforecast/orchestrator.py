@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -47,6 +48,7 @@ from endforecast.engine.fingerprint import FingerprintCalculator
 from endforecast.evaluation.splitter import DataSplitter, SplitConfig, NestedCVSplitter, NestedCVConfig
 from endforecast.evaluation.metrics import MetricCalculator, MetricResult, StatisticalComparison, StabilityEvaluator, CalibrationMetrics
 from endforecast.evaluation.hyperopt import HPOptimizer, HPOConfig
+from endforecast.hooks import PipelineHooks
 
 logger = logging.getLogger(__name__)
 
@@ -171,8 +173,12 @@ class EndForecast:
         leak_rules: Optional[dict[str, Any]] = None,
         requirements: Optional[str] = None,
         budget: str = "auto",
+        hooks: Optional[PipelineHooks] = None,
     ) -> RunResult:
         result = RunResult()
+
+        if hooks is None:
+            hooks = PipelineHooks()  # no-op hooks, never null
 
         # ── Initialize optimization budget ────────────────────────
         opt_budget = OptimizationBudget(
@@ -182,13 +188,20 @@ class EndForecast:
         logger.info("Optimization budget: %s decisions available", opt_budget.max_decisions)
 
         # ═══ Phase 0: Requirements ═══════════════════════════════
+        _t0 = time.time()
+        hooks.fire_phase_start(0, "Requirements Gathering")
         logger.info("=" * 50)
         logger.info("Phase 0: Requirements Gathering")
         if requirements:
             result.requirements = self.gatherer.gather(description=requirements)
             logger.info("  Task hint: %s", result.requirements.task_type_hint)
+        hooks.fire_phase_complete(0, "Requirements Gathering", "completed",
+                                   data={"task_type_hint": result.requirements.task_type_hint if result.requirements else None},
+                                   elapsed_ms=int((time.time() - _t0) * 1000))
 
         # ═══ Phase 1: Data Understanding ══════════════════════════
+        _t0 = time.time()
+        hooks.fire_phase_start(1, "Data Understanding")
         logger.info("Phase 1: Data Understanding")
         df = self._load_data(data)
         logger.info("  Loaded %s rows × %s cols", len(df), len(df.columns))
@@ -200,22 +213,43 @@ class EndForecast:
             result.metric_tiers["cold_start_detected"] = True
             result.metric_tiers["cold_start_groups"] = report.fingerprint.groups_below_threshold
         logger.info("  Task: %s | %s", report.task_type, report.summary())
+        hooks.fire_phase_complete(1, "Data Understanding", "completed",
+                                   data={"task_type": report.task_type, "n_rows": report.n_rows,
+                                         "n_cols": report.n_cols, "missing_ratio": report.missing_ratio,
+                                         "quality_flags": report.quality_flags,
+                                         "diagnostic": report.fingerprint.diagnostic[:500]},
+                                   elapsed_ms=int((time.time() - _t0) * 1000))
 
         # ═══ Phase 2: Data Preparation ════════════════════════════
+        _t0 = time.time()
+        hooks.fire_phase_start(2, "Data Preparation")
         logger.info("Phase 2: Data Preparation")
         preproc = self._plan_preprocessing(report)
         logger.info("  Steps: %s", preproc)
+        hooks.fire_phase_complete(2, "Data Preparation", "completed",
+                                   data={"steps": preproc},
+                                   elapsed_ms=int((time.time() - _t0) * 1000))
 
         # ═══ Phase 3: LeakGuard ══════════════════════════════════
+        _t0 = time.time()
         if leak_rules:
+            hooks.fire_phase_start(3, "LeakGuard Check")
             logger.info("Phase 3: LeakGuard Check")
             guard = LeakGuard.from_config(leak_rules)
             lr = guard.check("check", df)
             result.leak_report = lr
+            status = "completed" if lr.all_clear else "failed"
+            hooks.fire_phase_complete(3, "LeakGuard Check", status,
+                                       data={"all_clear": lr.all_clear, "summary": lr.summary()},
+                                       elapsed_ms=int((time.time() - _t0) * 1000))
             if not lr.all_clear:
                 result.errors.append(f"LeakGuard BLOCKED: {lr.summary()}")
                 return result
             logger.info("  PASSED")
+        else:
+            hooks.fire_phase_complete(3, "LeakGuard Check", "completed",
+                                       data={"skipped": True},
+                                       elapsed_ms=0)
 
         # ═══════════════════════════════════════════════════════════
         # ── LLM-driven experiment configuration ────────────────
@@ -241,6 +275,12 @@ class EndForecast:
                             llm_exp_config.get("tuning", {}).get("method", "?"),
                             llm_exp_config.get("primary_metric", "?"))
                 logger.info("  rationale: %s", llm_exp_config.get("rationale", "")[:100])
+                hooks.fire_llm_decision("configurator",
+                    decision_summary=f"holdout={llm_exp_config.get('holdout',{}).get('method','?')}, "
+                                    f"cv={llm_exp_config.get('cv',{}).get('method','?')}, "
+                                    f"route={llm_exp_config.get('route',{}).get('name','?')}, "
+                                    f"metric={llm_exp_config.get('primary_metric','?')}",
+                    rationale=llm_exp_config.get("rationale", ""))
         except Exception as exc:
             logger.warning("  LLM experiment configurator unavailable: %s", exc)
 
@@ -319,6 +359,8 @@ class EndForecast:
         later_tuning = llm_tuning if llm_tuning and llm_tuning != "none" else limits.get("tuning", "none")
 
         # ═══ Phase 4: Baseline Establishment ══════════════════════
+        _t0 = time.time()
+        hooks.fire_phase_start(4, "Baseline Establishment")
         logger.info("Phase 4: Baseline Establishment")
         result.baseline_result = self.baseline_runner.run(
             df, target_col=target_col, time_col=time_col, id_col=id_col,
@@ -326,6 +368,13 @@ class EndForecast:
         )
         baseline_floor = result.baseline_result.baseline_floor
         logger.info("  Baseline floor: %.4f (%s)", baseline_floor, primary_metric)
+        hooks.fire_phase_complete(4, "Baseline Establishment", "completed",
+                                   data={"baseline_floor": baseline_floor,
+                                         "best_baseline": result.baseline_result.best.trial.model if result.baseline_result.best else "?",
+                                         "metric": primary_metric,
+                                         "baselines": [{"model": r.trial.model, "value": r.metric_value}
+                                                       for r in result.baseline_result.results]},
+                                   elapsed_ms=int((time.time() - _t0) * 1000))
 
         # ── Heuristic First check ───────────────────────────────
         if requirements and result.requirements and result.requirements.acceptable_min_performance:
@@ -357,6 +406,10 @@ class EndForecast:
                 logger.info("  LLM planner: %s models, %s feature combos",
                             len(llm_plan_suggestions.get("models", [])),
                             len(llm_plan_suggestions.get("features", [])))
+                hooks.fire_llm_decision("planner",
+                    decision_summary=f"{len(llm_plan_suggestions.get('models',[]))} models, "
+                                    f"{len(llm_plan_suggestions.get('features',[]))} feature combos",
+                    rationale=llm_plan_suggestions.get("rationale", ""))
         except Exception as exc:
             logger.warning("  LLM planner unavailable, using fallback: %s", exc)
 
@@ -381,6 +434,8 @@ class EndForecast:
                 logger.warning("  Optimization budget exhausted at round %s", round_num - 1)
                 break
 
+            _rt0 = time.time()
+            hooks.fire_round_start(round_num, plan.n_trials)
             logger.info("  --- Round %s/%s ---", round_num, self.config.experiment.max_rounds)
             round_results = self._execute_round(plan, df, target_col, time_col, round_num, preproc, later_tuning if round_num > 1 else round1_tuning)
             if not round_results:
@@ -422,6 +477,7 @@ class EndForecast:
                 logger.info("    ⚠ Warning: Best model NOT better than baseline (%.4f)", baseline_floor)
 
             # ── Direction-aware convergence check ─────────────
+            llm_diag_output = None  # diagnosis captured earlier if LLM available
             if prev_best is not None and best is not None and prev_best != 0:
                 if metric_dir == "maximize":
                     improvement = (best.metric_value - prev_best) / abs(prev_best) if prev_best > 0 else 0
@@ -430,6 +486,14 @@ class EndForecast:
                 if improvement < self.config.experiment.convergence_threshold:
                     logger.info("    Converged (impr %.2f%% < %.1f%%)", improvement * 100, self.config.experiment.convergence_threshold * 100)
                     opt_budget.consume(f"Round {round_num}: convergence declared")
+                    hooks.fire_round_complete(round_num, plan.n_trials,
+                        best_model=best.trial.model, best_metric=best.metric_value,
+                        best_metric_name=best.trial.metric,
+                        trial_summaries=[{"id": r.trial.id, "model": r.trial.model,
+                                          "value": r.metric_value, "std": r.metric_std}
+                                         for r in round_results],
+                        diagnosis=None,
+                        elapsed_ms=int((time.time() - _rt0) * 1000))
                     break
             prev_best = best.metric_value
 
@@ -461,6 +525,8 @@ class EndForecast:
                 logger.warning("  Best model retrain for refinement failed: %s", exc)
 
         # ═══ Phase 6: Evaluation & Error Analysis ═══════════════
+        _t0 = time.time()
+        hooks.fire_phase_start(6, "Evaluation & Error Analysis")
         logger.info("Phase 6: Evaluation & Error Analysis")
 
         # ── Holdout evaluation (single unbiased assessment) ─────
@@ -483,9 +549,12 @@ class EndForecast:
             "validation_score": best.metric_value if best else float("nan"),
             "holdout_score": holdout_score,
             "optimization_rounds": len(history),
-            # No warning needed: holdout provides the unbiased estimate
             "data_snooping_warning": False,
         }
+        hooks.fire_phase_complete(6, "Evaluation & Error Analysis", "completed",
+                                   data={"holdout_score": holdout_score,
+                                         "validation_score": best.metric_value if best else None},
+                                   elapsed_ms=int((time.time() - _t0) * 1000))
 
         if best and best.is_successful and best.evaluation_df is not None:
             y_true = best.evaluation_df[target_col].values
@@ -495,6 +564,8 @@ class EndForecast:
                 logger.info("  %s", mr.interpretation)
 
         # ═══ Phase 7: Refinement ═════════════════════════════════
+        _t0 = time.time()
+        hooks.fire_phase_start(7, "Iterative Refinement")
         refinement_params = {}
         if best_predictions is not None and best_truth is not None and best and best.is_successful:
             logger.info("Phase 7: Iterative Refinement")

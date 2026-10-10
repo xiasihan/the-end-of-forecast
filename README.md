@@ -10,7 +10,8 @@
   <a href="#how-it-works">How It Works</a> ·
   <a href="#architecture">Architecture</a> ·
   <a href="#features">Features</a> ·
-  <a href="METHODOLOGY.md">Methodology</a>
+  <a href="METHODOLOGY.md">Methodology</a> ·
+  <a href="docs/FRONTEND.md">Web Console</a>
 </p>
 
 ---

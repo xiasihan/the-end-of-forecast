@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-text font-sans;
+    margin: 0;
+    overflow: hidden;
+  }
+}
+
+@layer components {
+  .phase-card {
+    @apply bg-surface border border-border rounded-lg mb-3 overflow-hidden;
+  }
+  .phase-card.running {
+    @apply border-yellow/40;
+  }
+  .phase-card.completed {
+    @apply border-green/20;
+  }
+  .phase-card.failed {
+    @apply border-red/40;
+  }
+  .card-header {
+    @apply flex items-center gap-3 px-4 py-2.5 cursor-pointer select-none hover:bg-white/[0.02];
+  }
+  .metric-value {
+    @apply font-mono text-lg font-bold;
+  }
+  .metric-label {
+    @apply text-dim text-xs uppercase tracking-wide;
+  }
+  .btn-primary {
+    @apply bg-blue/20 text-blue border border-blue/30 rounded-md px-4 py-1.5 text-sm font-medium
+           hover:bg-blue/30 transition-colors;
+  }
+  .btn-danger {
+    @apply bg-red/20 text-red border border-red/30 rounded-md px-4 py-1.5 text-sm font-medium
+           hover:bg-red/30 transition-colors;
+  }
+}
+
+/* Typing animation */
+.typing-char { animation: fadeIn 30ms ease-in; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Pulsating for running cards */
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(210, 153, 34, 0.4); }
+  50% { border-color: rgba(210, 153, 34, 0.9); }
+}
+.phase-card.running { animation: pulse-border 2s ease-in-out infinite; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d1117; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
