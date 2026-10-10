@@ -44,42 +44,6 @@ The platform uses a three-column layout inspired by professional developer tools
 
 ![Welcome Page](images/screenshots/welcome_en.png)
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  🔮 EndForecast                     [🌐 EN/中文]  [API Docs]    │  ← Header (48px)
-├──────────┬──────────────────────────────┬───────────────────────┤
-│          │                              │                       │
-│ PROJECT  │      Main Terminal Area      │    Context Panel      │
-│ LIST     │                              │                       │
-│          │  ┌────────────────────────┐  │  [▶ Run Pipeline]     │
-│ ┌──────┐ │  │                        │  │                       │
-│ │+ New │ │  │  Phase Output Cards    │  │  ● Phase Progress     │
-│ └──────┘ │  │  (streaming, expand)   │  │    P0 ✓ Requirements  │
-│          │  │                        │  │    P1 ✓ Understanding │
-│ Project1 │  │  ┌──────────────────┐  │  │    P2 ✓ Preparation  │
-│ (active) │  │  │ Phase 4: Baseline│  │  │    P3 ✓ LeakGuard    │
-│          │  │  │ ✅ completed     │  │  │    P4 ● Baseline     │
-│ Project2 │  │  │ naive=18.48      │  │  │    P5 — Experiment   │
-│          │  │  └──────────────────┘  │  │    ...               │
-│ Project3 │  │                        │  │                       │
-│          │  │  ┌──────────────────┐  │  │  Live Metrics         │
-│          │  │  │ Phase 5 ● Running│  │  │  Validation: 0.52    │
-│          │  │  │ Round 2/3        │  │  │  Holdout:    0.70   │
-│          │  │  └──────────────────┘  │  │  Best Model: lgbm   │
-│          │  │                        │  │                       │
-│          │  │  ▼ auto-scroll         │  │  🤖 LLM Decisions    │
-│          │  └────────────────────────┘  │  ┌──────────────────┐│
-│          │                              │  │ configurator:    ││
-│ 240px    │           flex-1             │  │ holdout=chrono.. ││
-│          │                              │  ├──────────────────┤│
-│          │                              │  │ planner: 4 models││
-│          │                              │  └──────────────────┘│
-│          │                              │        320px          │
-├──────────┴──────────────────────────────┴───────────────────────┤
-│  proj_anhui | ● Running | Best: lightgbm | Holdout: 0.70  [⏏] │  ← Status Bar
-└──────────────────────────────────────────────────────────────────┘
-```
-
 ### Key Regions
 
 | Region | Width | Purpose |
@@ -96,35 +60,6 @@ The platform uses a three-column layout inspired by professional developer tools
 
 Click **New Project** in the sidebar to open the creation dialog:
 
-```
-┌─────────────────────────────────────────────┐
-│  New Project                            [✕] │
-│                                             │
-│  Project Name                               │
-│  ┌─────────────────────────────────────────┐│
-│  │ e.g. Anhui Spread Prediction            ││
-│  └─────────────────────────────────────────┘│
-│                                             │
-│  Prediction Goal                            │
-│  ┌─────────────────────────────────────────┐│
-│  │ e.g. Predict whether Anhui electricity  ││
-│  │ price spread will go up or down         ││
-│  └─────────────────────────────────────────┘│
-│                                             │
-│  Target Column  Time Column  ID (optional)  │
-│  ┌──────┐       ┌──────┐     ┌──────┐      │
-│  │ y    │       │ ds   │     │      │      │
-│  └──────┘       └──────┘     └──────┘      │
-│                                             │
-│  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐  │
-│  │        📁 Drop CSV/Parquet file       │  │
-│  │        or click to browse             │  │
-│  └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘  │
-│                                             │
-│  [ Cancel ]    [ Create & Run Pipeline ]    │
-└─────────────────────────────────────────────┘
-```
-
 1. **Project Name** — A human-readable identifier.
 2. **Prediction Goal** — Describe your problem in natural language. This text is sent to the LLM agents to guide model selection, preprocessing, and feature engineering.
 3. **Column Mapping** — Specify which columns are the target (`y`), timestamp (`ds`), and optional group ID.
@@ -139,116 +74,31 @@ Once the pipeline starts, the terminal area streams output in real-time.
 
 ### Phase Cards
 
-Each of the 10 phases appears as a collapsible card:
-
-```
-┌─ Phase 1: Data Understanding ──── 2.3s ── ✅ completed ── [▼] ─┐
-│                                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │
-│  │ Task Type│ │ Rows     │ │ Columns  │ │ Missing  │          │
-│  │ classif. │ │ 6,360    │ │ 3        │ │ 0.0%     │          │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │
-│                                                                  │
-│  [label_noise]                                                   │
-│                                                                  │
-│  ┌─ Fingerprint Diagnostic ───────────────────────────────────┐ │
-│  │ Stationarity: ADF=-0.25 — fails to reject unit-root.       │ │
-│  │ Suggest first-order differencing.                          │ │
-│  │ Autocorrelation: moderate (ACF1=0.588). Lag features help. │ │
-│  │ Sparsity: 61% zeros. Consider zero-inflated models.        │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────────┘
-```
+Each of the 10 phases appears as a collapsible card.
 
 **Card behavior:**
-- **Running phases**: Auto-expanded, pulsing yellow border, spinner icon.
+- **Running phases**: Auto-expanded, pulsing amber border, spinner icon.
 - **Completed phases**: Collapsed to summary line; click header to expand.
 - **Failed phases**: Red border, error message always visible.
 - Phase-specific content rendered based on phase type (baseline tables, fingerprint diagnostics, holdout scores).
 
 ### Phase Progress Tracker (Right Panel)
 
-The right panel shows a vertical stepper that updates in real-time:
-
-```
-Phase Progress
- ● P0 ✓ Requirements Gathering   1.2s
- ● P1 ✓ Data Understanding       2.3s
- ● P2 ✓ Data Preparation         0.1s
- ● P3 ✓ LeakGuard Check          0.5s
- ● P4 ● Baseline Establishment   1.8s    ← currently running
- ○ P5 — Experiment Execution
- ○ P6 — Evaluation & Error Analysis
- ○ P7 — Iterative Refinement
- ○ P8 — Interpretation
- ○ P9 — Pipeline Construction
- ○ P10 — Drift Detection
-```
+The right panel shows a vertical stepper that updates in real-time with each phase's status (pending, running, completed, failed) and elapsed time.
 
 ### Rounds Within Phase 5
 
-Phase 5 runs multiple experiment rounds. Each round produces a `round_complete` event visible in the LLM Decision log:
-
-```
-🤖 LLM Decisions
-┌──────────────────────────────────────────────┐
-│ configurator                                 │
-│ holdout=chronological, cv=time_series,       │
-│ route=fast, metric=mase                      │
-│ ──────────────────────────────────────────── │
-│ planner                                      │
-│ 4 models, 3 feature combos                   │
-│ Lag features essential with ACF1=0.85...     │
-│ ──────────────────────────────────────────── │
-│ diagnostician (Round 1)                      │
-│ Ridge MASE 4.44 vs baseline 18.48...         │
-└──────────────────────────────────────────────┘
-```
+Phase 5 runs multiple experiment rounds. Each round produces a `round_complete` event visible in the LLM Decision log, showing the best model, best metric, trial summaries, and LLM diagnosis per round.
 
 ---
 
 ## Dashboard & Results
 
-When the pipeline completes, the terminal area switches to the Dashboard view:
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  📊 Run Summary                                      [Export]│
-├─────────────┬─────────────┬──────────────┬──────────────────┤
-│ Validation  │ Holdout     │ Best Model   │ Rounds           │
-│ ─────────── │ ─────────── │ ─────────────│ ───────────      │
-│ 0.5168      │ 1.0000      │ logistic     │ 3                │
-│ Best model  │ Unbiased    │ Selected     │ Experiment       │
-│ on validat. │ estimate    │ algorithm    │ rounds           │
-├─────────────┴─────────────┴──────────────┴──────────────────┤
-│                                                              │
-│  🔮 Deployment API                                           │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ curl -X POST .../api/projects/PROJ_ID/predict \        │  │
-│  │   -H "Authorization: Bearer YOUR_API_KEY" \            │  │
-│  │   -H "Content-Type: application/json" \                │  │
-│  │   -d '{"data": [...]}'                                 │  │
-│  └────────────────────────────────────────────────────────┘  │
-│  [📋 Copy] [📥 Download predictor.py]                       │
-│                                                              │
-│  🤖 LLM Decisions                                            │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │ configurator  holdout=chronological, route=fast...     │  │
-│  │ planner       4 models, 3 feature combos               │  │
-│  │ diagnostician Ridge MASE 4.44, stable across seeds     │  │
-│  │ refiner       residual_correction (bias=+255.7)        │  │
-│  │ ensemble      median_ensemble → 5 models               │  │
-│  └────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────┘
-```
+When the pipeline completes, the terminal area switches to the Dashboard view with four metric cards (Validation, Holdout, Best Model, Rounds), a Deployment API section with a copyable curl command, and an LLM Decisions log showing every agent choice and rationale throughout the run.
 
 ### Status Bar
 
-The bottom bar shows live run status:
-
-```
-proj_anhui | ○ Idle | Best: logistic | Holdout: 1.0000 | 0 errors   [⏏ Export]
-```
+The bottom bar shows live run status: project ID, running/idle indicator, best model, holdout score, and error count.
 
 ---
 
