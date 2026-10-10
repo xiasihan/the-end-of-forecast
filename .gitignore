@@ -41,4 +41,4 @@ pip-wheel-metadata/
 
 # Secrets and config (do NOT commit)
 .env
-endforecast/_llm.py
+endforecast/_llm.pyendforecast_sessions/
